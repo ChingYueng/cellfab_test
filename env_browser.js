@@ -8,13 +8,13 @@
 window.INFLUX_ENV = {
   /** InfluxDB v2 URL, '/influxdb' relies upon proxy to forward to the target influxDB */
   //url: 'http://localhost:8086', //'/influx',
-  url: '/influx',
+  url: '/influx'
   /** InfluxDB authorization token */
-  token: 'vAgixsCL7Ba5mcXa_kOuLMDTinebx_JAhwVof2UnnoQ4XrdXYt32kUEtsEOkE07Tk1_SPFFhLlytxir59Ai7Cg==',
+  token: '%TOKEN%',
   /** InfluxDB organization */
-  org: 'TestingOrgaisation',
+  org: '%ORG%',
   /** InfluxDB bucket used for onboarding and write requests. */
-  bucket: 'TestingBucket',
+  bucket: '%BUCKET%',
 
   /** The following properties are used ONLY in the onboarding example */
   /** InfluxDB user  */
