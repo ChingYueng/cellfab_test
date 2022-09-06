@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Mixing and Dispersing</title>
+
+        <!--Connect the css file and the js file-->
+        <link rel="stylesheet" type="text/css" href="MixingOutput_style.css">
+        <script type="text/javascript" src="MixingOutput.js"></script>
+
+        <!--Connect INFLUXDB-->
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.2.0/math.js'></script> 
+        <script type="module">
+            // import latest release from npm repository 
+            //import {InfluxDB, Point} from 'https://unpkg.com/@influxdata/influxdb-client/dist/index.browser.mjs'
+            //import {PingAPI, SetupAPI} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.browser.mjs'
+            import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
+            import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
+            import './env_browser.js'
+            const {url, token, org, bucket, username, password} = window.INFLUX_ENV
+
+            const influxDB = new InfluxDB({url, token})
+
+            // log results also to HTML page
+            const logField = document.getElementById('log');
+
+            //create a matrix to save graph data
+            var graph_matrix = []
+            var graph_viscosity = []
+            var graph_temperature = []
+
+            var csv_viscosity = []
+            var csv_temperature = []
+
+
+            function log(message, ...rest){
+                console.log(arguments[0],rest)
+                const previousValue = logField.value
+                logField.value += (previousValue?'\n':'')+Array.prototype.slice.call(arguments).join('\n')
+                // scroll to bottom with latest results
+                logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
+            }
+
+            function queryExample(fluxQuery) {
+                log('\n*** QUERY ***')
+
+                //reset graph matrix
+                graph_matrix = []
+                graph_viscosity = []
+                graph_temperature = []
+
+                //matrx for csv table
+                csv_viscosity = []
+                csv_temperature = []
+                
+                const queryApi = influxDB.getQueryApi(org)
+                queryApi.queryRows(fluxQuery, {
+                next(row, tableMeta) {
+                    const o = tableMeta.toObject(row)
+                    var time
+                    var date
+                    var value
+                    var hour
+                    var minute
+                    var second
+                    var timeofday
+                    var measurement
+
+
+                    if (o.example){
+                        // custom output for example query
+                        log(
+                            `${o._time} ${o._measurement} in '${o.location}' (${o.example}): ${o._field}=${o._value}`
+                        )
+                    } 
+                    
+                    else {
+                        //create matrix to draw graph
+                        time = new Date(Date.parse(`${o._time}`))
+                        hour = time.getHours()
+                        minute = time.getMinutes()
+                        second = time.getSeconds()
+                        value = parseFloat(JSON.parse(`${o._value}`))
+                        measurement = `${o._field}`
+                        log(time + '   ' + value + '   ' + hour + ':' + minute + ':' + second + '   ' + measurement)
+
+                        timeofday = [hour,minute,second]
+                        graph_matrix.push([timeofday,value,measurement])
+                    
+                        
+                        if (measurement == "CM_111_viscosity_cathode-mPas"){
+                            graph_viscosity.push([timeofday, value])
+                        }
+
+                        else if (measurement == "MT_110_cathode_mixing_temperature_wet-celsius"){
+                            graph_temperature.push([timeofday, value])
+                        }
+                    }
+                },
+                error(error) {
+                    log('QUERY FAILED', error)
+                },
+                complete() {
+                    log('QUERY FINISHED')
+                    
+                    drawChart("MT_110_cathode_mixing_temperature_wet-celsius", graph_temperature)
+                    drawChart("CM_111_viscosity_cathode-mPas", graph_viscosity)
+                },
+                })
+            }
+
+            //create a user-defined function to download CSV file   
+            function download_csv_file() {  
+                //define the heading for each row of the data  
+                var csv = 'Hour,Minute,Second,Value, Measurement\n';  
+
+                //merge the data with CSV  
+                graph_matrix.forEach(function(row) {  
+                            csv += row.join(',');  
+                            csv += "\n";  
+                    });  
+                    
+                    var hiddenElement = document.createElement('a');  
+                    hiddenElement.href = 'data:text/csv;charset=utf-8,' + encodeURI(csv);  
+                    hiddenElement.target = '_blank';  
+                    
+                    //provide the name for the CSV file to be downloaded  
+                    hiddenElement.download = 'testing_csv.csv';  
+                    hiddenElement.click();                 
+            }  
+
+            // initialize page controls            
+            const queryInput = document.getElementById('query');
+            const fluxQueryParam = new URLSearchParams(window.location.search).get('fluxQuery');
+            if (fluxQueryParam){
+                queryInput.value = fluxQueryParam
+            }
+            document.getElementById('csvButton').addEventListener('click', () => {
+                download_csv_file()
+            })
+            document.getElementById('queryButton').addEventListener('click', () => {
+                queryExample(queryInput.value)
+                showViscosity()
+                
+                showLog()
+                showTemperature()
+            })
+            document.getElementById('onboardButton').addEventListener('click', () => {
+                onboardingExample()
+            })
+            
+        </script>
+
+        <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+        <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawChart);
+
+        function drawChart(measurement, matrix) {
+            var data = new google.visualization.DataTable();
+            data.addColumn('timeofday', 'Day');
+            data.addColumn('number', 'Viscosity');
+
+            data.addRows(matrix);
+
+            if (measurement == "CM_111_viscosity_cathode-mPas"){
+                var options = {
+                    title: 'Viscosity',
+                    curveType: 'function',
+                    legend: 'none',
+                    vAxis:{
+                        title: 'Viscosity [Nm/s2]'
+                    },
+
+                    hAxis: {
+                        title: 'Time [hh:ss]'
+                    }
+                };
+                var chart = new google.visualization.LineChart(document.getElementById('viscosity_chart'));
+            }
+
+            else if (measurement == "MT_110_cathode_mixing_temperature_wet-celsius"){
+                var options = {
+                    title: 'Temperature',
+                    curveType: 'function',
+                    legend: 'none',
+                    vAxis:{
+                        title: 'Temperature [°C]'
+                    },
+
+                    hAxis: {
+                        title: 'Time [hh:ss]'
+                    }
+                };
+                var chart = new google.visualization.LineChart(document.getElementById('temperature_chart'));
+            }
+            chart.draw(data, options);
+        }
+        </script>
+    </head>
+
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <header>
+            <div class="Navigation_Bar Navigation_Link">
+                <img class="CELLFAB_Logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
+                <a href="DataAccess.html">DATA ACCESS</a>
+                <a href="DataInput.html">DATA INPUT</a>
+                <a>DEUTSCH</a>
+            </div>
+        </header>
+
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                                   TITLE, MAIN CONTAINER                                                              -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <h1 class="Page_Title">Mixing & Dispersing</h1>          
+
+        <div class="div_MainContainer">
+            
+            <!--Process flow chain showing current position of the process-->
+            <div class="div_ProcessFlow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
+                <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
+                <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
+            </div>
+
+            <!------------------------------------------>
+            <!-------------- CHECKBOXES-------------- -->
+            <!------------------------------------------>
+            <!--List of BatchIDs-->
+            <div style="display:flex ;">
+                <div style="margin-right: 50px">
+                    <label for="BatchIDs">Batch ID :</label>
+                    <select name="BatchID" id="BatchID" onclick="chooseBatchID()">
+                        <option value="PEM1">PEM1</option>
+                        <option value="PEM2">PEM2</option>
+                        <option value="PEM3">PEM3</option>
+                        <option value="PEM4">PEM4</option>
+                        <option value="PEM5">PEM5</option>
+                    </select><br><br><br>
+
+                    <input type="checkbox" id="checkbox_MixingSteps" name="checkbox_MixingSteps" onClick="showMixingSteps()">
+                    <label for="checkbox_MixingSteps"> Mixing Steps</label><br><br>
+
+                    <input type="checkbox" id="checkbox_Weight" name="checkbox_Weight" onClick="showWeight()">
+                    <label for="checkbox_Weight"> Weight</label><br><br>
+
+                    <input type="checkbox" id="checkbox_Temperature" name="checkbox_Temperature">
+                    <label for="checkbox_Temperature"> Temperature</label><br><br>
+
+                    <input type="checkbox" id="checkbox_Time" name="checkbox_Time" onClick="showTime()">
+                    <label for="checkbox_Time"> Time</label><br><br>
+
+                    <input type="checkbox" id="checkbox_Speed" name="checkbox_Speed" onClick="showSpeed()">
+                    <label for="checkbox_Speed"> Speed</label><br><br>
+
+                    <input type="checkbox" id="checkbox_Viscosity" name="checkbox_Viscosity">
+                    <label for="checkbox_Viscosity"> Viscosity</label><br><br>
+
+                    <input type="checkbox" id="checkbox_Log" name="checkbox_Log">
+                    <label for="checkbox_Log"> Query Log</label><br><br>
+
+                    <div style="display:none; margin-bottom: 10px;">
+                        <textarea id="query" style="flex: 1" rows="2"
+                        >from(bucket:"TestingBucket") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "CM_111_viscosity_cathode-mPas" or r._field == "MT_110_cathode_mixing_temperature_wet-celsius")</textarea>
+                    </div>
+                    <button id="queryButton">Query InfluxDB</button>
+                    <button id="csvButton">CSV Download</button>
+                    
+                    
+                </div>
+
+                <div id="temperature_chart" style="width: 500px; height: 300px; display: none; border: 5px;  border-style: double;"></div>
+                <div id="viscosity_chart" style="width: 500px; height: 300px; display: none; border: 5px;  border-style: double;"></div>
+            </div>
+            
+            
+          </div>
+
+          <hr>
+          <fieldset id="log_area" style="display:none">
+            <legend>Log</legend>
+            <textarea
+              id="log"
+              style="width: 100%"
+              rows="25"
+            ></textarea>
+            <button onclick="document.getElementById('log').value=''">Clear Log</button>
+          </fieldset>
+    </body>
+</html>

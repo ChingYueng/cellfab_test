@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<!--comment-->
+<html> 
+    <head>
+        <title>Data Input</title>
+        <link rel="stylesheet" type="text/css" href="DataInput_style.css">
+        <script type="text/javascript" src="DataInput.js"></script>
+    </head>
+    <body>
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <header>
+            <div class="nav_container topBotomBordersIn">
+                <img class="CELLFAB_logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
+                <a href="DataAccess.html">DATA ACCESS</a>
+                <a>FIND BATCH</a>
+                <a>DEUTSCH</a>
+              </div>
+        </header>
+
+        <h1 class="CellFab_Input">Data Input</h1>
+
+        <button class="button_SNP" role="button" onclick="openForm()"><span>Start new production</span></button>
+          
+        <div class="form-popup" id="myForm">
+          <form method="POST" action="Mixing.html" class="form-container">
+            <h1>Add New Batch</h1>
+          
+            <label for="Batch"><b>Batch ID</b></label>
+            <p id="Batch"></p>
+          
+            <label for="Comments"><b>Comments</b></label>
+            <input type="text" name="Comments">
+            <br>
+          
+            <button type="submit" class="btn" onclick="create_ID()">Add</button>
+            <button type="button" class="btn cancel" onclick="closeForm()">Close</button>
+          </form>
+        </div>
+
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                            PROCESS: ELECTRODE MANUFACTURING                                                              -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+
+        <div class="Main_Process">
+            <div class="Process_header_background">
+                <h3 class="Process_header">Electrode Manufacturing</h3>
+            </div>
+            <a class="Process_link_first" href="InputMaterials.html">                                                            <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
+            </a>            
+            <img class="Process_arrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <a class="Process_link" href="Mixing.html">                                                                  <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="CoatingDrying.html">                                                                  <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                  <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                  <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                  <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                  <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                  <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
+            </a>
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                PROCESS: CELL ASSEMBLY                                                                    -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <div class="Main_Process">
+            <div class="Process_header_background">
+                <h3 class="Process_header">Cell Assembly</h3>
+            </div>
+            <a class="Process_link_first" href="#####">                                                                  <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                                 <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\2_Cell_Assembly\1_E_Separation.png" alt="Separation logo">             <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                                        <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\2_Cell_Assembly\2_E_Stacking.png" alt="Stacking logo">                   <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\2_Cell_Assembly\3_E_WeldingContactFlags.png" alt="Welding Contact Flags logo">                           <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow"src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\2_Cell_Assembly\4_E_Insertion.png" alt="Insertion logo">                           <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\2_Cell_Assembly\5_E_PartialSealing.png" alt="Partial Sealing logo">               <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\2_Cell_Assembly\6_E_ElectrolyteFilling.png" alt="Electrolyte filling logo">               <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\2_Cell_Assembly\7_E_PartiallySealedPouchcell.png" alt="Partially Sealed Pouchcell logo">               <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                PROCESS: CELL FINISHING                                                                   -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <div class="Main_Process">
+            <div class="Process_header_background">
+                <h3 class="Process_header">Cell Finishing</h3>
+            </div>
+            
+            <a class="Process_link_first" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\2_Cell_Assembly\7_E_PartiallySealedPouchcell.png" alt="Partially Sealed Pouchcell logo">               <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                             <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\3_Cell_Finishing\1_E_Formation.png" alt="High Temp Aging logo">                   <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\3_Cell_Finishing\2_E_Degassing&Sealing.png" alt="Formation logo">                         <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\3_Cell_Finishing\3_E_HT-Aging.png" alt="Degassing & Sealing logo">               <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\3_Cell_Finishing\4_E_RT-Aging.png" alt="Room Temp Aging logo">                   <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\3_Cell_Finishing\5_E_EoL-Test.png" alt="EoF logo">                               <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <img class="Process_arrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <a class="Process_link" href="#####">                                                                   <!--TODO: ADD LINK TO PROCESS_LINK ELEMENT-->
+                <img class="Process_logo" src="Images\DataAccess\3_Cell_Finishing\6_E_FullySealedPouchcell.png" alt="EoF logo">                               <!--TODO: ADD PHOTO TO PROCESS_LOGO ELEMENT-->
+            </a>
+            <br><br><br><br>
+        </div>
+        
+        <div>
+            
+        </div>
+
+    </body>
+</html>
