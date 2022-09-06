@@ -8,7 +8,7 @@
 window.INFLUX_ENV = {
   /** InfluxDB v2 URL, '/influxdb' relies upon proxy to forward to the target influxDB */
   //url: 'http://localhost:8086', //'/influx',
-  url: '/influx'
+  url: '/influx',
   /** InfluxDB authorization token */
   token: '%TOKEN%',
   /** InfluxDB organization */
