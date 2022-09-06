@@ -5,12 +5,12 @@ const token = process.env['INFLUX_TOKEN'] || 'vAgixsCL7Ba5mcXa_kOuLMDTinebx_JAhw
 /** Organization within InfluxDB  */
 const org = process.env['INFLUX_ORG'] || 'TestingOrgaisation'
 /**InfluxDB bucket used in examples  */
-const bucket = 'TestingBucket'
+const bucket = process.env['INFLUX_BUCKET'] || 'TestingBucket'
 // ONLY onboarding example
 /**InfluxDB user  */
-const username = 'cc8916s'
+const username = process.env['INFLUX_USERNAME'] || 'cc8916s'
 /**InfluxDB password  */
-const password = 'Wqf6223ccy'
+const password = process.env['INFLUX_PASSWORD'] || 'Wqf6223ccy'
 
 module.exports = {
   url,

@@ -7,7 +7,8 @@
 // eslint-disable-next-line no-undef
 window.INFLUX_ENV = {
   /** InfluxDB v2 URL, '/influxdb' relies upon proxy to forward to the target influxDB */
-  url: 'http://localhost:8086', //'/influx',
+  //url: 'http://localhost:8086', //'/influx',
+  url: '/influx',
   /** InfluxDB authorization token */
   token: 'vAgixsCL7Ba5mcXa_kOuLMDTinebx_JAhwVof2UnnoQ4XrdXYt32kUEtsEOkE07Tk1_SPFFhLlytxir59Ai7Cg==',
   /** InfluxDB organization */
