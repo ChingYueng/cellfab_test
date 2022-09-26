@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Input Materials</title>
+        <link rel="stylesheet" type="text/css" href="InputMaterials_style.css">
+        <script type="text/javascript" src="InputMaterials.js"></script>
+    </head>
+
+    <!--On load of the page, open the 'defaultOpen tab'-->
+    <body onload="document.getElementById('defaultOpen').click();"> 
+
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <header>
+            <div class="Navigation_Bar Navigation_Link">
+                <img class="CELLFAB_Logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
+                <a href="DataAccess.html">DATA ACCESS</a>
+                <a href="DataInput.html">DATA INPUT</a>
+                <a>DEUTSCH</a>
+            </div>
+        </header>
+
+    
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                                  TITLE, MAIN CONTAINER                                                                   -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <h1 class="Page_Title">Input Materials</h1>  
+
+        <div class="div_MainContainer">
+            
+            <!--Process flow chain showing current position of the process-->
+            <div class="div_ProcessFlow">
+                <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
+                <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
+                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
+                <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
+            </div>
+
+            <a class="button_1" style="margin-left: 80%;" href="https://onedrive.live.com/redir?resid=154068B5BA211242%211807&authkey=%21AjK8kQtUBmG5oH4&page=View&wd=target%28Fertigungsprotokolle%20Q2%2022.one%7C1d1bc475-5c48-4db1-ae5c-ce649b07c107%2FZeitraum%7C86baeb91-fc20-4fc0-8944-21db69c010e6%2F%29">CELLFAB OneNote</a> 
+            <br><br>
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                                    TABS                                                                                  -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+
+            <div class="div_Tab">
+                <button class="button_TabLinks" onclick="openTab(event, 'AvailableMaterials')" id="defaultOpen">Available Materials</button>    <!--This tab is opened when the page loads-->
+                <button class="button_TabLinks" onclick="openTab(event, 'AddMaterials')">Add Materials</button>
+            </div>
+
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                            AVAILABLE MATERIALS TAB                                                                       -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+
+            <div id="AvailableMaterials" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
+                <br>
+                Table of available materials <br><br>
+                TODO:   <br>
+                &bull;Query InfluxBD for material info and display here<br>
+                &bull;Change when material is added (influxdb programming)
+            </div>
+
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+<!--                                                              ADD MATERIALS TAB                                                                            -->
+<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+
+            <div id="AddMaterials" class="div_TabContent">
+                <h3>Please enter the material variables and press the 'Add Material' button</h3> 
+
+                <div class="div_AddVariable">
+                    <div class="div_AddVariableLeft">
+
+                        <!------------------------->
+                        <!-- VARIABLE : MATERIAL -->
+                        <!------------------------->
+                        <img class="img_VariableIcon" src="Images\InputMaterials\material_icon.png" alt="Material icon">
+                        <!--<label class="Mixing_variables">&emsp;Material&emsp;&emsp;&emsp;&emsp;</label>-->
+                        <a class="ProcessVariables" href="https://www.google.com">&emsp;Material</a>
+                            
+                        <!--List of material options-->
+                        <select class ="ProcessInput" name="Materials" id="Materials" onclick="materialVariables()">
+                            <option value="Graphit">Graphit</option>
+                            <option value="CMC">CMC</option>
+                            <option value="Ruß">Ruß</option>
+                            <option value="SBR">SBR</option>
+                            <option value="New Material">New Material</option>
+                        </select><br><br><br>
+
+                        <!---------------------------------->
+                        <!-- VARIABLE : NEW MATERIAL NAME -->
+                        <!---------------------------------->
+                        <!--New Material Name variable is available when the material chosen is "New Material"-->
+                        <p id="newmaterial_form" style="display:none">
+                            <img class="img_VariableIcon" src="Images\InputMaterials\newmaterial_icon.png" alt="New Material icon">
+                            <a class="ProcessVariables" href="https://www.google.com">&emsp;New Material</a>  
+                            <input class ="ProcessInput" id="NewMaterial" type="text" name="NewMaterial"><br><br><br>
+                        </p>
+
+                        <!------------------------->
+                        <!-- VARIABLE : SUPPLIER -->
+                        <!------------------------->
+                        <img class="img_VariableIcon" src="Images\InputMaterials\supplier_icon.png" alt="Supplier icon">
+                        <!--<label class="Mixing_variables">&emsp;Temperature</label>-->
+                        <a class="ProcessVariables" href="https://www.google.com">&emsp;Supplier</a>  
+                        <input class ="ProcessInput"id="Supplier" type="text" name="Supplier">
+                        <label class="ProcessInputUnit"></label><br><br><br><br>
+
+                        <!--------------------------------->
+                        <!-- VARIABLE : DATE OF DELIVERY -->
+                        <!--------------------------------->
+                        <img class="img_VariableIcon" src="Images\InputMaterials\datedelivery_icon.png" alt="Date of Delivery icon">
+                        <!--<label class="Mixing_variables">&emsp;Time</label>-->
+                        <a class="ProcessVariables" href="https://www.google.com">&emsp;Date of Delivery</a>  
+                        <input class ="ProcessInput"type="date" id="DateDelivery"><br><br><br><br>
+                        
+
+                        <!-------------------------------------->
+                        <!-- VARIABLE : ADD VARIABLE TEMPLATE -->
+                        <!-------------------------------------->
+                        <!--
+                            <img class="img_VariableIcon" src="Images\InputMaterials\**NAME_OF_VARIABLE_ICON**" alt="**NAME_OF_VARIABLE** icon">
+                            <a class="ProcessVariables" href="**ONE_NOTE_PAGE_ADDRESS**">&emsp;**NAME_OF_VARIABLE**</a>  
+                            <input class ="ProcessInput" id="**NAME_OF_VARIABLE_NO_SPACE**" type="number" name="**NAME_OF_VARIABLE_NO_SPACE**">
+                            <label class="ProcessInputUnit">**VARIABLE_UNIT**</label><br><br><br><br>
+                        -->
+                        
+                        <!--------------------------->
+                        <!-- BUTTON : ADD VARIABLE -->
+                        <!--------------------------->
+                        <button class="button_2" onclick="addVariable(
+                            document.getElementById('Materials').value, 
+                            document.getElementById('Supplier').value,
+                            document.getElementById('DateDelivery').value,
+        
+                            /*------------------------------------
+                            --- BUTTON : ADD VARIABLE TEMPLATE ---
+                            --------------------------------------
+                            ,document.getElementById('**NAME_OF_VARIABLE_NO_SPACE**').value */
+                            )">
+                            <span>Add Material</span>
+                        </button> <br><br>
+                    </div>
+                </div>
+            </div>        
+        </div>     
+    </body>
+</html>

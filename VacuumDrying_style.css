@@ -1,0 +1,465 @@
+body
+{
+  font-family: 'Montserrat', sans-serif;
+  background-image: url(Images/VacuumDrying/Background_VacuumDrying.jpeg);
+  background-size: cover;
+}
+ 
+/*-------------------------------------------------------------------------*/
+/*                             NAVIGATION BAR                              */
+/*-------------------------------------------------------------------------*/
+.CELLFAB_Logo
+{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 25%; 
+  height: auto;
+}
+ 
+div.Navigation_Bar
+{
+  margin: 0 auto;
+  padding: 1em 0em;
+  text-align: right;
+}
+ 
+div.Navigation_Bar a
+{
+  color: rgb(5, 5, 5);
+  text-decoration: none;
+  font: 20px bold;
+  margin: 0px 10px;
+  padding: 10px 10px;
+  position: relative;
+  z-index: 0;
+  cursor: pointer;
+}
+ 
+/* Top and Bottom borders come in */
+div.Navigation_Link a:before, div.Navigation_Link a:after
+{
+  position: absolute;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: rgb(0, 0, 0);
+  content: "";
+  opacity: 0;
+  transition: all 0.3s;
+}
+
+div.Navigation_Link a:before
+{
+  top: 0px;
+  transform: translateY(-10px);
+}
+
+div.Navigation_Link a:after
+{
+  bottom: 0px;
+  transform: translateY(10px);
+}
+
+div.Navigation_Link a:hover:before, div.Navigation_Link a:hover:after
+{
+  opacity: 1;
+  transform: translateY(0px);
+}
+
+.Page_Title
+{
+  font-size: 40px;
+  text-align: center;
+  color: rgb(0, 0, 0);
+}
+
+/*-------------------------------------------------------------------------*/
+/*                        TITLE, MAIN CONTAINER                                */
+/*-------------------------------------------------------------------------*/
+.div_MainContainer
+{
+  border-style: none;
+  width: 100%;
+  height: auto;
+  position: relative;
+  padding-top: 0%;
+  padding-bottom: 2%; 
+  margin-left: 0%;   
+  margin-top: 3%;
+}
+
+.div_ProcessFlow
+{
+  padding-top: 0px;
+  display: flex;
+  justify-content: center;
+}
+
+.img_ProcessLogo
+{
+  border-style:solid;
+  border-radius: 20px;
+  width: 5%; 
+  height: 5%;
+  margin-bottom: 2px;
+  filter: invert(30%);
+}
+
+.img_ProcessLogoChosen
+{
+  border-style:solid;
+  border-radius: 20px;
+  width: 5%; 
+  height: 5%;
+  margin-bottom: 10px;
+}
+
+.img_ProcessArrow
+{
+  width: 1%; 
+  height: 3%;
+  padding-left: 3px;
+  padding-right: 3px;
+  padding-top: 1%;
+}
+
+/* Style for button 1 */
+.button_1 
+{
+  background: rgb(0,84,159);
+  border: 1px solid rgb(0,84,159);
+  border-radius: 6px;
+  box-shadow: rgba(0, 0, 0, 0.1) 1px 2px 4px;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  height: 40px;
+  outline: 0;
+  padding: 10px 10px;
+  text-align: center;
+  text-rendering: geometricprecision;
+  text-transform: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+  text-decoration: none;
+}
+
+.button_1 span 
+{
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+.button_1 span:after 
+{
+  content: '\00bb';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+
+.button_1:hover span 
+{
+  padding-right: 25px;
+}
+
+.button_1:hover span:after
+{
+  opacity: 1;
+  right: 0;
+  background-color: initial;
+  background-position: 0 0;
+  color: rgb(0,84,159);
+}
+
+.button_1:hover, 
+.button_1:active 
+{
+  background-color: initial;
+  background-position: 0 0;
+  color: rgb(0,84,159);
+}
+
+/* Process flow popup - hidden by default */
+.popup_ProcessFlow 
+{
+  background-color: white;
+  display: none;
+  position: fixed;
+  bottom: 1%;
+  right: 15px;
+  border: 5px solid black;
+  z-index: 9;
+  width: 50%;
+  height : 90%;
+}
+
+/* Button to close the pop up */
+.button_PopUpCancel 
+{
+  background-color: red;
+  opacity: 50%;
+}
+
+.button_PopUpCancel:hover 
+{
+  opacity: 100%;
+}
+
+.img_ProcessFlow
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width:70%;
+    height:90%
+}
+
+/*-------------------------------------------------------------------------*/
+/*                                  TABS                                   */
+/*-------------------------------------------------------------------------*/
+.div_Tab 
+{
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+  
+/* Style the buttons that are used to open the tab content */
+.button_TabLinks
+{
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+}
+
+/* Change background color of buttons on hover */
+.button_TabLinks:hover 
+{
+  background-color: #ddd;
+}
+
+/* Style the tab buttons that are active */
+.button_TabLinks.active 
+{
+  background-color: #ccc;
+}
+
+/* Style the tab content */
+.div_TabContent 
+{
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+/*-------------------------------------------------------------------------*/
+/*                              VARIABLES TAB                              */
+/*-------------------------------------------------------------------------*/
+
+.img_VariableIcon
+{
+  width: 2%;
+  height: auto;
+  padding-left: 20px;
+}
+
+.div_AddVariable
+{
+  display: grid;
+}
+
+.div_AddVariableLeft
+{
+  grid-column: 1;
+}
+
+.div_AddVariableRight
+{
+  grid-column: 2;
+  background: white;
+  border: 4px;
+  border-style:solid;
+  width: 100%;
+  height: 100%;
+}
+
+.ProcessVariables
+{
+  font-size: 120%;
+  color: black;
+  text-decoration: none;
+}
+
+.img_InfoIcon
+{
+  width: 15px;
+  height: 15px;
+}
+
+.img_InfoIcon:hover
+{
+  width: 20px;
+  height: 20px;
+}
+
+.ProcessInput
+{
+  position: absolute;
+  left: 300px;
+}
+
+.ProcessInputUnit
+{
+  position: absolute;
+  left: 480px;
+}
+
+/* STYLE FOR BUTTON 2 */
+.button_2 
+{
+  background: rgb(0,84,159);
+  border: 1px solid rgb(0,84,159);
+  border-radius: 6px;
+  box-shadow: rgba(0, 0, 0, 0.1) 1px 2px 4px;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+  min-height: 40px;
+  outline: 0;
+  padding: 12px 14px;
+  text-align: center;
+  text-rendering: geometricprecision;
+  text-transform: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+}
+
+.button_2 span 
+{
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+.button_2 span:after 
+{
+  content: '\00bb';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+ 
+.button_2:hover span 
+{
+  padding-right: 25px;
+}
+
+.button_2:hover span:after 
+{
+  opacity: 1;
+  right: 0;
+  background-color: initial;
+  background-position: 0 0;
+  color: rgb(0,84,159);
+}
+
+.button_2:hover, 
+.button_2:active 
+{
+  background-color: initial;
+  background-position: 0 0;
+  color: rgb(0,84,159);
+}
+
+.div_SubTab 
+{
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons that are used to open the tab content */
+.button_SubTabLinks
+{
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+}
+
+/* Change background color of buttons on hover */
+.button_SubTabLinks:hover 
+{
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.button_SubTabLinks.active 
+{
+  background-color: #ccc;
+}
+ 
+/* Style the tab content */
+.div_SubTabContent
+{
+  display: none;
+  padding: 6px 12px;
+  border: none;
+}
+
+/*-------------------------------------------------------------------------*/
+/*                                MIXING TAB                               */
+/*-------------------------------------------------------------------------*/
+/* Style the table */
+#Table tr:nth-child(even)
+{
+  background: rgb(178, 192, 206);
+}
+   
+#Table tr:nth-child(odd) 
+{ 
+  background: rgb(209,231,255);
+}
+   
+#Table th 
+{ 
+  margin-top: 100px; 
+  background: rgb(0,84,159); 
+  color: #FFFFFF;
+  height: 30px;
+}
+   
+#Table 
+{ 
+  width: 100%; 
+  border-collapse: separate; 
+  empty-cells: show; 
+}
