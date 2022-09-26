@@ -1,0 +1,92 @@
+body{
+    margin: 0;
+    padding:0;
+    font-family: 'Verdana', sans-serif;
+    background: url(Images/Homepage/HomepageBackground.png);
+    background-size: cover;
+}
+
+/*-------------------------------------------------------------------------*/
+/*                               LANGUAGE                                  */
+/*-------------------------------------------------------------------------*/
+.language {
+    float: right;
+    text-decoration: none;
+    color: black;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+}
+
+.language:hover{
+text-decoration: underline;
+}
+
+/*-------------------------------------------------------------------------*/
+/*                         INPUT OUTPUT BUTTONS                            */
+/*-------------------------------------------------------------------------*/
+.InputOutputButtons{
+    display: flex;
+    justify-content: center;
+    margin-top: 10%;
+}
+
+.InputOutputLogo{
+    border-style: dotted;
+    border-width: 5px;
+    border-radius: 20px;
+    width: 300px;
+    height: 300px;
+    margin-left: 40px;
+}
+
+.InputOutputLogo:hover{
+    border-style: solid;
+}
+
+/*-------------------------------------------------------------------------*/
+/*                         INFO LOGO AND TOOLTIPS                          */
+/*-------------------------------------------------------------------------*/
+.InfoLogo{
+    width: 40px;
+    height: 30px;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black;
+  }
+  
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 300px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 110%;
+    left: 50%;
+    margin-left: -150px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+  }
+  
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+  }

@@ -7,7 +7,7 @@ function validate(){
     
     if(username == set_username && password == set_password)
     {
-        window.location.href = "Mixing.html";
+        window.location.href = "Homepage.html";
         return false;
     }
 

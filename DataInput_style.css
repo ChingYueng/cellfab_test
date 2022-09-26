@@ -1,0 +1,242 @@
+body{
+  font-family: 'Montserrat', sans-serif;
+  background-image: url(Images/DataAccess/Background_DataAccess.png);
+  background-size: cover;
+}
+
+/*-------------------------------------------------------------------------*/
+/*                             NAVIGATION BAR                              */
+/*-------------------------------------------------------------------------*/
+.CELLFAB_logo{
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 25%; 
+  height: auto;
+}
+
+div.nav_container
+{
+  margin: 0 auto;
+  padding: 1em 0em;
+  text-align: right;
+}
+
+div.nav_container a
+{
+  color: rgb(5, 5, 5);
+  text-decoration: none;
+  font: 20px bold;
+  margin: 0px 10px;
+  padding: 10px 10px;
+  position: relative;
+  z-index: 0;
+  cursor: pointer;
+}
+
+/* Top and Bottom borders come in */
+div.topBotomBordersIn a:before, div.topBotomBordersIn a:after
+{
+  position: absolute;
+  left: 0px;
+  width: 100%;
+  height: 2px;
+  background: rgb(0, 0, 0);
+  content: "";
+  opacity: 0;
+  transition: all 0.3s;
+}
+
+div.topBotomBordersIn a:before
+{
+  top: 0px;
+  transform: translateY(-10px);
+}
+
+div.topBotomBordersIn a:after
+{
+  bottom: 0px;
+  transform: translateY(10px);
+}
+
+div.topBotomBordersIn a:hover:before, div.topBotomBordersIn a:hover:after
+{
+  opacity: 1;
+  transform: translateY(0px);
+}
+
+/*-------------------------------------------------------------------------*/
+/*                            CELLFAB INPUT                               */
+/*-------------------------------------------------------------------------*/
+.CellFab_Input{
+    font-size: 40px;
+    text-align: center;
+    color: rgb(0, 0, 0);
+}
+
+/*-------------------------------------------------------------------------*/
+/*                               PROCESS                                   */
+/*-------------------------------------------------------------------------*/
+.Main_Process{
+  padding-top: 0px;
+  
+}
+
+.Process_header_background{
+  color: white;
+  /*background-color: rgb(0,84,159); */
+  background-image: linear-gradient(to left, rgba(255,0,0,0), rgb(0,84,159));
+}
+
+.Process_header{
+  margin-left: 60px;
+}
+
+.Process_link{
+  text-decoration: none;
+}
+
+.Process_link_first{
+ text-decoration: none;
+ margin-left: 3%;
+}
+
+.Process_logo{
+  border-style:inset;
+  border-width: 2px;
+  border-radius: 10px;
+  width: 8%; 
+  height: auto;
+  box-shadow: 2px 5px #494747;
+  filter: opacity(90%);
+}
+
+.Process_logo:hover{
+ border-style:outset;
+ border-width: 3px;
+ box-shadow: 4px 7px #494747;
+ filter: opacity(100%);
+}
+
+.Process_arrow{
+  width:2%; 
+  height: auto;
+  padding-bottom: 1%;
+}
+
+
+/* Start new production (SNP) BUTTON */
+.button_SNP {
+  background: rgb(0,84,159);
+  border: 1px solid rgb(0,84,159);
+  border-radius: 6px;
+  box-shadow: rgba(0, 0, 0, 0.1) 1px 2px 4px;
+  box-sizing: border-box;
+  color: #FFFFFF;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+  min-height: 40px;
+  outline: 0;
+  padding: 12px 14px;
+  text-align: center;
+  text-rendering: geometricprecision;
+  text-transform: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  vertical-align: middle;
+}
+.button_SNP span {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+.button_SNP span:after {
+  content: '\00bb';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+
+.button_SNP:hover span {
+  padding-right: 25px;
+}
+
+.button_SNP:hover span:after {
+  opacity: 1;
+  right: 0;
+  background-color: initial;
+  background-position: 0 0;
+  color: rgb(0,84,159);
+}
+
+.button_SNP:hover,
+.button_SNP:active {
+  background-color: initial;
+  background-position: 0 0;
+  color: rgb(0,84,159);
+}
+
+
+
+/* The popup form - hidden by default */
+.form-popup {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  right: 15px;
+  border: 3px solid #f1f1f1;
+  z-index: 9;
+}
+
+/* Add styles to the form container */
+.form-container {
+  max-width: 300px;
+  padding: 10px;
+  background-color: white;
+}
+
+/* Full-width input fields */
+.form-container input[type=text]
+{
+  width: 100%;
+  padding: 30px;
+  margin: 5px 0 22px 0;
+  border: none;
+  background: #f1f1f1;
+}
+
+/* When the inputs get focus, do something */
+.form-container input[type=text]:focus, .form-container input[type=password]:focus {
+  background-color: #ddd;
+  outline: none;
+}
+
+/* Set a style for the submit/login button */
+.form-container .btn {
+  background-color: #04AA6D;
+  color: white;
+  padding: 16px 20px;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  margin-bottom:10px;
+  opacity: 0.8;
+}
+
+/* Add a red background color to the cancel button */
+.form-container .cancel {
+  background-color: red; 
+}
+
+/* Add some hover effects to buttons */
+.form-container .btn:hover, .open-button:hover {
+  opacity: 1;
+}
+
