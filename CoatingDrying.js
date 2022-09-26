@@ -94,5 +94,5 @@ function removeRow(oButton) {
 }
 
 function doneProcess() {
-  window.location.href = 'file:///C:/Users/Ching%20Yueng/Desktop/PEM/FrontEnd_HTML/Calendering.html';
+  window.location.href = 'Calendering.html';
 }

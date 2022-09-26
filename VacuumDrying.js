@@ -84,7 +84,7 @@ function addVariable(DryingTemperature, DryingDuration, PressureVacuum, Residual
 }
 
 function doneProcess() {
-  window.location.href = 'file:///C:/Users/Ching%20Yueng/Desktop/PEM/FrontEnd_HTML/ElectrodeFoil.html';  // navigate page to coating & drying
+  window.location.href = 'ElectrodeFoil.html';  // navigate page to electrode foil
 }
 
 function removeRow(oButton) {

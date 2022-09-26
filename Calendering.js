@@ -84,7 +84,7 @@ function addVariable(RollPressure, RollTemperature, CoatingThickness, Adhesion /
 }
 
 function doneProcess() {
-  window.location.href = 'file:///C:/Users/Ching%20Yueng/Desktop/PEM/FrontEnd_HTML/Slitting.html';  // navigate page to coating & drying
+  window.location.href = 'Slitting.html';  // navigate page to slitting
 }
 
 function removeRow(oButton) {

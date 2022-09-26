@@ -75,7 +75,7 @@ function addVariable(LengthElectrode /*  ,**NAME_OF_VARIABLE_NO_SPACE**  */) {
 }
 
 function doneProcess() {
-  window.location.href = 'file:///C:/Users/Ching%20Yueng/Desktop/PEM/FrontEnd_HTML/VacuumDrying.html';  // navigate page to coating & drying
+  window.location.href = 'VacuumDrying.html';  // navigate page to vacuum drying
 }
 
 function removeRow(oButton) {
