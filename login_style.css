@@ -1,0 +1,74 @@
+body{
+    margin: 0;
+    padding:0;
+    font-family: 'Verdana', sans-serif;
+    background: url(Images/DataAccess/Background.png);
+    background-size: cover;
+}
+
+h1{
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+/*-------------------------------------------------------------------------*/
+/*                              LOGIN FORM                                 */
+/*-------------------------------------------------------------------------*/
+.login_form{
+    width: 300px;
+    padding: 30px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    background: rgba(255, 255, 255, 0.4);
+    text-align: center;
+}
+
+.login_form input[type="text"], .login_form input[type="password"]{
+    border: 0;
+    background: none;
+    display: block;
+    margin: 20px auto;
+    text-align: center;
+    border: 3px solid rgb(0,84,159);
+    padding: 14px 10px;
+    width: 220px;
+    outline: none;
+    color: black;
+    border-radius: 24px;
+    transition: 0.25px;
+}
+
+.login_form input[type="text"]:focus, .login_form input[type="password"]:focus{
+    width: 270px;
+    border-color: black;
+}
+
+
+/*-------------------------------------------------------------------------*/
+/*                            SUBMIT BUTTON                                */
+/*-------------------------------------------------------------------------*/
+input[type="submit"]{
+    border: 0;
+    background: none;
+    display: block;
+    position: absolute;
+    top: 80%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    text-align: center;
+    border: 3px solid rgb(0,84,159);
+    width: 70px;
+    padding: 14px 10px;
+    outline: none;
+    color: black;
+    border-radius: 20px;
+    transition: 0.25px;
+    cursor: pointer;
+}
+
+input[type="submit"]:hover{
+    background:white;
+    width: 80px;
+}
