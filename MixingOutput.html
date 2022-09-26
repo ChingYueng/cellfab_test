@@ -274,7 +274,7 @@
 
                     <div style="display:none; margin-bottom: 10px;">
                         <textarea id="query" style="flex: 1" rows="2"
-                        >from(bucket:"TestingBucket") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "CM_111_viscosity_cathode-mPas" or r._field == "MT_110_cathode_mixing_temperature_wet-celsius")</textarea>
+                        >from(bucket:"manual_process_data") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "CM_111_viscosity_cathode-mPas" or r._field == "MT_110_cathode_mixing_temperature_wet-celsius")</textarea>
                     </div>
                     <button id="queryButton">Query InfluxDB</button>
                     <button id="csvButton">CSV Download</button>

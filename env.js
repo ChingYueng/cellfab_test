@@ -8,9 +8,9 @@ const org = process.env['INFLUX_ORG'] || 'TestingOrgaisation'
 const bucket = process.env['INFLUX_BUCKET'] || 'TestingBucket'
 // ONLY onboarding example
 /**InfluxDB user  */
-const username = process.env['INFLUX_USERNAME'] || 'cc8916s'
+const username = process.env['INFLUX_USERNAME'] || '--'
 /**InfluxDB password  */
-const password = process.env['INFLUX_PASSWORD'] || 'Wqf6223ccy'
+const password = process.env['INFLUX_PASSWORD'] || '--'
 
 module.exports = {
   url,
