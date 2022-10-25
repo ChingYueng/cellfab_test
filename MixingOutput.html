@@ -11,17 +11,21 @@
         <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.2.0/math.js'></script> 
         <script type="module">
             // import latest release from npm repository 
-            //import {InfluxDB, Point} from 'https://unpkg.com/@influxdata/influxdb-client/dist/index.browser.mjs'
-            //import {PingAPI, SetupAPI} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.browser.mjs'
             import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
             import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
             import './env_browser.js'
             const {url, token, org, bucket, username, password} = window.INFLUX_ENV
-
             const influxDB = new InfluxDB({url, token})
 
             // log results also to HTML page
             const logField = document.getElementById('log');
+            function log(message, ...rest){
+                console.log(arguments[0],rest)
+                const previousValue = logField.value
+                logField.value += (previousValue?'\n':'')+Array.prototype.slice.call(arguments).join('\n')
+                // scroll to bottom with latest results
+                logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
+            }
 
             //create a matrix to save graph data
             var graph_matrix = []
@@ -30,15 +34,6 @@
 
             var csv_viscosity = []
             var csv_temperature = []
-
-
-            function log(message, ...rest){
-                console.log(arguments[0],rest)
-                const previousValue = logField.value
-                logField.value += (previousValue?'\n':'')+Array.prototype.slice.call(arguments).join('\n')
-                // scroll to bottom with latest results
-                logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
-            }
 
             function queryExample(fluxQuery) {
                 log('\n*** QUERY ***')

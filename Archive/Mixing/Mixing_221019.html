@@ -1,0 +1,286 @@
+<html>
+  <head>
+    <title>Mixing and Dispersing</title>
+
+    <!--Connect the css file and the js file-->
+    <link rel="stylesheet" type="text/css" href="Mixing_style.css">
+    <script type="text/javascript" src="Mixing.js"></script>
+
+    <script type="module">
+      // import latest release from npm repository 
+      //import {InfluxDB, Point} from 'https://unpkg.com/@influxdata/influxdb-client/dist/index.browser.mjs'
+      //import {PingAPI, SetupAPI} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.browser.mjs'
+      import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
+      import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
+      import './env_browser.js'
+
+      const {url, token, org, bucket, username, password} = window.INFLUX_ENV
+      const influxDB = new InfluxDB({url, token})
+
+      // log results also to HTML page
+      const logField = document.getElementById('log');
+      function log(message, ...rest){
+        console.log(arguments[0],rest)
+        const previousValue = logField.value
+        logField.value += (previousValue?'\n':'')+Array.prototype.slice.call(arguments).join('\n')
+        // scroll to bottom with latest results
+        logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
+      }
+
+      function writeExample(temperature,viscosity) {
+        const writeApi = influxDB.getWriteApi(org, bucket)
+        log('\n*** WRITE ***')
+        const point1 = new Point('CELLFAB-Measurement')
+          .floatField('CM_111_viscosity_cathode-mPas', temperature)
+        const point2 = new Point('CELLFAB-Measurement')
+          .floatField('MT_110_cathode_mixing_temperature_wet-celsius', viscosity)
+
+        writeApi.writePoint(point1)
+        writeApi.writePoint(point2)
+        log(` ${point1.toLineProtocol()}`)
+        log(` ${point2.toLineProtocol()}`)
+
+        // flush pending writes and close writeApi
+        writeApi
+          .close()
+          .then(() => {
+            log('WRITE FINISHED')
+          })
+          .catch(e => {
+            log('WRITE FAILED', e)
+          })
+
+        addVariable(0,0,temperature,0,0,viscosity,0,0)
+      }
+
+      function addVariable(Materials, Weight, Temperature, Time, Speed, Viscosity, checkbox_AddWater, Volume ) { 
+        var table = document.getElementById("Table");  // initialise table
+        var row = table.insertRow(); 
+        var countRows = counter;
+
+        // add cell to the table
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+        var cell3 = row.insertCell(2);
+        var cell4 = row.insertCell(3);
+        var cell5 = row.insertCell(4);
+        var cell6 = row.insertCell(5);
+        var cell7 = row.insertCell(6);
+        var cell8 = row.insertCell(7);
+        var cell9 = row.insertCell(8);
+
+        // remove button
+        var remove_button = document.createElement('input'); 
+        remove_button.setAttribute('type', 'button');
+        remove_button.setAttribute('value', 'Remove');
+        remove_button.setAttribute('onclick', 'removeRow(this)');
+        
+        // initialize table cells
+        cell1.innerHTML = Materials; 
+        cell2.innerHTML = Weight; 
+        cell3.innerHTML = Temperature;
+        cell4.innerHTML = Time;
+        cell5.innerHTML = Speed;
+        cell6.innerHTML = Viscosity;
+        cell7.innerHTML = checkbox_AddWater;
+        cell8.innerHTML = Volume;
+        cell9.innerHTML = "<br><button type='button' onclick='removeRow(this)' >Remove </button><br>";
+
+        countRows++; 
+        document.getElementById("counter").value = countRows; 
+
+        alert("Mixing step added");
+
+        // reset input field
+        //document.getElementById('Materials').value = null;
+        //document.getElementById('Weight').value = null;
+        document.getElementById('Temperature').value = null;
+        //document.getElementById('Time').value = null;
+        //document.getElementById('Speed').value = null;
+        document.getElementById('Viscosity').value = null;
+        //document.getElementById('checkbox_AddWater').checked = false;
+        //document.getElementById('Volume').value = null;
+
+        // go to table tab after adding the variables
+        document.getElementById('Table_tab').click();
+      }
+      
+      // initialize page controls
+      const temperatureInput = document.getElementById('Temperature');
+      const viscosityInput = document.getElementById('Viscosity');
+      const writeButton = document.getElementById('writeButton')
+      writeButton.addEventListener('click', () => {
+        const temperature = Number(temperatureInput.value)
+        const viscosity = Number(viscosityInput.value)
+        if (isNaN(temperature)||isNaN(viscosity)) log('ERROR: Not a number ');
+        else writeExample(temperature,viscosity)
+      })
+    </script>
+  </head>
+
+  <!--On load of the page, open the 'defaultOpen tab'-->
+  <body onload="document.getElementById('defaultOpen').click();"> 
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <header>
+      <div class="Navigation_Bar Navigation_Link">
+          <img class="CELLFAB_Logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
+          <a href="DataAccess.html">DATA ACCESS</a>
+          <a href="DataInput.html">DATA INPUT</a>
+          <a>DEUTSCH</a>
+      </div>
+    </header>
+
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--                                                                   TITLE, MAIN CONTAINER                                                              -->
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <h1 class="Page_Title">Mixing & Dispersing</h1>          
+
+    <div class="div_MainContainer">
+        
+        <!--Process flow chain showing current position of the process-->
+        <div class="div_ProcessFlow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
+            <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
+            <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
+        </div>
+        
+        <div style=" display: flex; justify-content: space-between;">
+            <h4>Batch ID: </h4>    <!-- TODO: Read batch ID from server-->
+
+            <div>
+                <button class="button_1" onclick="openProcessFlow()">Reference Process Flow</button>
+        
+                <div class="popup_ProcessFlow" id="popup_ProcessFlow">
+                    <button type="button" class="button_PopUpCancel" onclick="closeProcessFlow()">x</button> <br>
+                    <img class="img_ProcessFlow"src="Images\Mixing\MixingProcessFlow.png" alt="Image of Process Flow">
+                </div>
+
+                <a class="button_1" href="https://onedrive.live.com/redir?resid=154068B5BA211242%211807&authkey=%21AjK8kQtUBmG5oH4&page=View&wd=target%28Fertigungsprotokolle%20Q2%2022.one%7C1d1bc475-5c48-4db1-ae5c-ce649b07c107%2FZeitraum%7C86baeb91-fc20-4fc0-8944-21db69c010e6%2F%29">CELLFAB OneNote</a> 
+            </div>
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                    TABS                                                                                  -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+
+        <div class="div_Tab">
+          <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
+          <button class="button_TabLinks" onclick="openTab(event, 'Variables')">Variables</button>
+          <button class="button_TabLinks" onclick="openTab(event, 'TableTab')" id = "Table_tab">Mixing Steps</button>                 
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                  MANUAL TAB                                                                              -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+
+        <div id="Manual" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
+          <br>
+          The mixing process aims to produce a homogeneous slurry without destroying the material structures by accessive shear force. <br><br>
+
+          &bull; The button "Reference Process Flow" shows an example process flow that was normally used for reference. <br><br>
+
+          &bull; The button "CELLFAB OneNote" directs you to the OneNote Notebook of the process for more information. <br><br>
+
+          &bull; To add a new step, press the "Add Step" tab and enter the details.  <br><br>
+          
+          &bull; After submitting the details, the page automatically directs you to the "Mixing Steps" tab which summarises all the mixing steps in a table. <br><br>
+
+          &bull; If an error was found in the table, the mixing step can be deleted and reentered in the "Mixing Steps" tab too. <br><br>
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                              ADD VARIABLE TAB                                                                            -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+
+        <div id="Variables" class="div_TabContent">
+          <h3>Please enter the variables and press the 'Add mixing step' button</h3> 
+
+          <div class="div_AddVariable">
+              <div class="div_AddVariableLeft">
+
+                  <!---------------------------->
+                  <!-- VARIABLE : TEMPERATURE -->
+                  <!---------------------------->
+                  <img class="img_VariableIcon" src="Images\Mixing\temp_icon.png" alt="Temp icon">
+                  <label class="ProcessVariables">&emsp;Temperature</label>
+                  <a href="https://www.google.com">   <!--TODO : Change to OneNote link-->
+                      <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                  </a>  
+                  <input class ="ProcessInput"id="Temperature" type="number" name="Temperature" value="21">
+                  <label class="ProcessInputUnit">°C</label><br><br><br><br>
+
+                  <!-------------------------->
+                  <!-- VARIABLE : VISCOSITY -->
+                  <!-------------------------->
+                  <img class="img_VariableIcon" src="Images\Mixing\viscosity_icon.png" alt="Viscosity icon">
+                  <label class="ProcessVariables">&emsp;Viscosity</label>
+                  <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                      <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                  </a> 
+                  <input class ="ProcessInput"type="number" id="Viscosity" value="22">
+                  <label class="ProcessInputUnit">Ns/m<sup>2</sup></label><br><br><br>
+
+                  <button class="button_2" id="writeButton">Write to InfluxDB</button>
+              </div>
+          </div>                    
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                 TABLE TAB                                                                                -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->                
+        <div id="TableTab" class="div_TabContent">
+          <table id="Table"> 
+              <tr> 
+                  <th>Materials</th>
+                  <th>Weight</th>
+                  <th>Temperature</th>
+                  <th>Time</th>
+                  <th>Rotating Speed</th>
+                  <th>Viscosity</th>
+                  <th>Water</th>
+                  <th>Volume</th>
+                  <!------------------------------->
+                  <!-- ADD TABLE COLUMN TEMPLATE -->
+                  <!------------------------------->
+                  <!--
+                      <th>**NAME_OF_VARIABLE** **VARIABLE_UNIT**</th>
+                  -->
+                  <th>&emsp;&emsp;&emsp;</th> 
+              </tr> <tr></tr>
+          </table> <br><br><br>
+
+          <div id="counterDiv" style="display:none"> <input id="counter" type="number" value="0" readonly></div>
+
+          <!-- Done button -->
+          <button class="button_2" onclick="doneProcess()">
+              <span>Mixing Done</span>
+          </button> <br><br>
+
+          <fieldset id="log_area">
+            <legend>Log</legend>
+            <textarea
+              id="log"
+              style="width: 100%"
+              rows="25"
+            ></textarea>
+            <button onclick="document.getElementById('log').value=''">Clear Log</button>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,124 +1,115 @@
-//Matrix to save all data, to be sent to influxdb later
-var influx_matrix = []
-
 function openTab(evt, TabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("div_TabContent");
-    for (i = 0; i < tabcontent.length; i++) {
-      tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("button_TabLinks");
-    for (i = 0; i < tablinks.length; i++) {
-      tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-    document.getElementById(TabName).style.display = "block";
-    evt.currentTarget.className += " active";
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("div_TabContent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
   }
-
-  function openSubTab(sub_evt, SubTabName) {
-    var i, subtabcontent, subtablinks;
-    subtabcontent = document.getElementsByClassName("div_SubTabContent");
-    for (i = 0; i < subtabcontent.length; i++) {
-      subtabcontent[i].style.display = "none";
-    }
-    subtablinks = document.getElementsByClassName("button_SubTabLinks");
-    for (i = 0; i < subtablinks.length; i++) {
-      subtablinks[i].className = subtablinks[i].className.replace(" active", "");
-    }
-    document.getElementById(SubTabName).style.display = "block";
-    sub_evt.currentTarget.className += " active";
+  tablinks = document.getElementsByClassName("button_TabLinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
   }
-  
-function addVariable(Materials, Weight, Temperature, Time, Speed, Viscosity, checkbox_AddWater, Volume /*  ,**NAME_OF_VARIABLE_NO_SPACE**  */) { 
-  var table = document.getElementById("Table");  // initialise table
-  var row = table.insertRow(); 
-  var countRows = counter;
-
-  // add cell to the table
-  var cell1 = row.insertCell(0);
-  var cell2 = row.insertCell(1);
-  var cell3 = row.insertCell(2);
-  var cell4 = row.insertCell(3);
-  var cell5 = row.insertCell(4);
-  var cell6 = row.insertCell(5);
-  var cell7 = row.insertCell(6);
-  var cell8 = row.insertCell(7);
-  var cell9 = row.insertCell(8);
-
-  /* ----------------------------
-         ADD CELL TEMPLATE
-  -------------------------------
-  var cell**n+1** = row.insertCell(**n**);
-  */
-
-  // remove button
-  var remove_button = document.createElement('input'); 
-  remove_button.setAttribute('type', 'button');
-  remove_button.setAttribute('value', 'Remove');
-  remove_button.setAttribute('onclick', 'removeRow(this)');
-  
-  // initialize table cells
-  cell1.innerHTML = Materials; 
-  cell2.innerHTML = Weight; 
-  cell3.innerHTML = Temperature;
-  cell4.innerHTML = Time;
-  cell5.innerHTML = Speed;
-  cell6.innerHTML = Viscosity;
-  cell7.innerHTML = checkbox_AddWater;
-  cell8.innerHTML = Volume;
-  /* ----------------------------
-         INITIALIZE CELL TEMPLATE
-  -------------------------------
-  cell**n**.innerHTML = **NAME_OF_VARIABLE_NO_SPACE** ;
-  */
- 
-  cell9.innerHTML = "<br><button type='button' onclick='removeRow(this)' >Remove </button><br>";
-
-  countRows++; 
-  document.getElementById("counter").value = countRows; 
-
-  alert("Mixing step added");
-
-  influx_matrix.push([Materials, Weight, Temperature, Time, Speed, Viscosity, checkbox_AddWater, Volume])
-
-  // reset input field
-  document.getElementById('Materials').value = null;
-  document.getElementById('Weight').value = null;
-  document.getElementById('Temperature').value = null;
-  document.getElementById('Time').value = null;
-  document.getElementById('Speed').value = null;
-  document.getElementById('Viscosity').value = null;
-  document.getElementById('checkbox_AddWater').checked = false;
-  document.getElementById('Volume').value = null;
-
-  /* ----------------------------
-         RESET INPUT FIELD TEMPLATE
-  -------------------------------
-  document.getElementById('**NAME_OF_VARIABLE_NO_SPACE**').value = null;
-  */
-
-  // go to table tab after adding the variables
-  document.getElementById('Table_tab').click();
+  document.getElementById(TabName).style.display = "block";
+  evt.currentTarget.className += " active";
 }
 
 function doneProcess() {
-  window.location.href = 'file:///C:/Users/Ching%20Yueng/Desktop/PEM/FrontEnd_HTML/CoatingDrying.html';  // navigate page to coating & drying
+  window.location.href = 'CoatingDrying.html';  // navigate page to coating & drying
 }
 
-function materialVariables() {
-  var material = document.getElementById("Materials");
-  var text = document.getElementById("weight_form");
-  if (material.value == "None"){
-    text.style.display = "none";
-  } 
-  else {
-      text.style.display = "block";
+function downlaodCSV(){
+  // Variable to store the final csv data
+  var csv_data = [];
+
+  // Get each row data
+  var rows = document.getElementsByTagName('tr');
+  for (var i = 0; i < rows.length; i++) {
+
+    // Get each column data
+    var cols = rows[i].querySelectorAll('td,th');
+
+    // Stores each csv row data
+    var csvrow = [];
+    for (var j = 0; j < cols.length; j++) {
+
+        // Get the text data of each cell of a row and push it to csvrow
+        csvrow.push(cols[j].innerHTML);
+    }
+
+    // Combine each column value with comma
+    csv_data.push(csvrow.join(","));
   }
+
+  // Combine each row data with new line character
+  csv_data = csv_data.join('\n');
+
+  // Call this function to download csv file 
+  downloadCSVFile(csv_data);
 }
+
+function downloadCSVFile(csv_data) {
+
+  // Create CSV file object and feed our csv_data into it
+  CSVFile = new Blob([csv_data], {
+      type: "text/csv"
+  });
+
+  // Create to temporary link to initiate download process
+  var temp_link = document.createElement('a');
+
+  // Create variables to generate today's date for filename
+  var today = new Date();
+  var dd = String(today.getDate()).padStart(2, '0');
+  var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+  var yyyy = today.getFullYear();
+
+  today = yyyy + '-' + mm + '-' + dd;
+
+  // Download csv file
+  temp_link.download = ("MixingProcess_" + today);
+  var url = window.URL.createObjectURL(CSVFile);
+  temp_link.href = url;
+
+  // This link should not be displayed
+  temp_link.style.display = "none";
+  document.body.appendChild(temp_link);
+
+  // Automatically click the link to trigger download
+  temp_link.click();
+  document.body.removeChild(temp_link);
+}
+
   
-function showVolumeInput() {
-  var checkBox = document.getElementById("checkbox_AddWater");
-  var text = document.getElementById("volume_form");
+function showVariableInputBox(material) {
+  if (material=='water'){
+    var checkBox = document.getElementById("checkbox_AddWater");
+    var text = document.getElementById("form_water");
+  }
+
+  if (material=='SBR'){
+    var checkBox = document.getElementById("checkbox_AddSBR");
+    var text = document.getElementById("form_SBR");
+  }
+
+  if (material=='graphite'){
+    var checkBox = document.getElementById("checkbox_AddGraphite");
+    var text = document.getElementById("form_Grapite");
+  }
+
+  if (material=='CMC'){
+    var checkBox = document.getElementById("checkbox_AddCMC");
+    var text = document.getElementById("form_CMC");
+  }
+
+  if (material=='russ'){
+    var checkBox = document.getElementById("checkbox_AddRuss");
+    var text = document.getElementById("form_Russ");
+  }
+
+  if (material=='SG3'){
+    var checkBox = document.getElementById("checkbox_AddSG3");
+    var text = document.getElementById("form_SG3");
+  }
+  
   if (checkBox.checked == true){
     text.style.display = "block";
   } 

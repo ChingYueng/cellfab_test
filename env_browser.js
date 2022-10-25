@@ -15,10 +15,4 @@ window.INFLUX_ENV = {
   org: '%ORG%',
   /** InfluxDB bucket used for onboarding and write requests. */
   bucket: '%BUCKET%',
-
-  /** The following properties are used ONLY in the onboarding example */
-  /** InfluxDB user  */
-  /**username: 'cc8916s',*/
-  /** InfluxDB password  */
-  /**password: 'Wqf6223ccy',*/
 }
