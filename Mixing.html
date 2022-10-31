@@ -6,6 +6,7 @@
     <link rel="stylesheet" type="text/css" href="Mixing_style.css">
     <link rel="stylesheet" type="text/css" href="General_style.css">
     <script type="text/javascript" src="Mixing.js"></script>
+    <script type="text/javascript" src="General_functions.js"></script>
 
     <script type="module">
       // import latest release from npm repository 
@@ -54,7 +55,7 @@
         var row = table.insertRow(); 
 
         // add cell to the table
-        var mixing_step_sequence = row.insertCell(0);
+        var mixing_sequence = row.insertCell(0);
         var timestamp = row.insertCell(1);
         var material_cell = row.insertCell(2);
         var weight_cell = row.insertCell(3);
@@ -70,13 +71,13 @@
         remove_button.setAttribute('onclick', 'removeRow(this)');
 
         // query and initialize mixing_step & timestamp
-        var fluxQuery = 'from(bucket:"manual_process_data") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "MT_110_mixing_sequence")|> tail(n: 1)'; //TODO: change bucket to 'TestingBucket' 
+        var fluxQuery = 'from(bucket:"manual_process_data") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "MT_110_mixing_sequence")|> tail(n: 1)';  
         const queryApi = influxDB.getQueryApi(org)
         queryApi.queryRows(fluxQuery, {
         next(row, tableMeta) {
             const o = tableMeta.toObject(row)
             var query_MixingSequence = parseFloat(JSON.parse(`${o._value}`))
-            mixing_step_sequence.innerHTML = query_MixingSequence; // initialize mixing_step_sequence (mixing step)
+            mixing_sequence.innerHTML = query_MixingSequence; // initialize mixing_sequence (mixing step)
 
             var time = new Date(Date.parse(`${o._time}`))
             var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
@@ -450,10 +451,10 @@
               </tr>
           </table> <br>
           
-            <button class="button_1" onclick="downlaodCSV()" id="button_csv" style="margin-left: 85%; ;">Download CSV</button>
+            <button class="button_1" onclick="downlaodCSV('Mixing')" id="button_csv" style="margin-left: 85%; ;">Download CSV</button>
 
             <!-- Done button -->
-            <button class="button_2" onclick="doneProcess()" id="button_Done" disabled>Mixing Done</button>
+            <button class="button_2" onclick="doneProcess('Mixing')" id="button_Done" disabled>Mixing Done</button>
             <label id="button_Done_hint">&emsp;Add at least one mixing sequence to end the mixing process</label>
             <br><br>
             </div>

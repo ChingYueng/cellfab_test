@@ -5,7 +5,7 @@ const token = process.env['INFLUX_TOKEN'] || 'vAgixsCL7Ba5mcXa_kOuLMDTinebx_JAhw
 /** Organization within InfluxDB  */
 const org = process.env['INFLUX_ORG'] || 'TestingOrgaisation'
 /**InfluxDB bucket used in examples  */
-const bucket = process.env['INFLUX_BUCKET'] || 'TestingBucket'
+const bucket = process.env['INFLUX_BUCKET'] || 'manual_process_data'
 // ONLY onboarding example
 /**InfluxDB user  */
 const username = process.env['INFLUX_USERNAME'] || '--'

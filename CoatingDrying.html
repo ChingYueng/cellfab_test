@@ -1,222 +1,314 @@
-<!DOCTYPE html>
 <html>
-    <head>
-        <title>Coating & Drying</title>
+  <head>
+    <title>Coating and Drying</title>
 
-        <!--Connect the css file and the js file-->
-        <link rel="stylesheet" type="text/css" href="CoatingDrying_style.css">
-        <script type="text/javascript" src="CoatingDrying.js"></script>
-    </head>
+    <!--Connect the css file and the js file-->
+    <link rel="stylesheet" type="text/css" href="CoatingDrying_style.css">
+    <link rel="stylesheet" type="text/css" href="General_style.css">
+    <script type="text/javascript" src="CoatingDrying.js"></script>
+    <script type="text/javascript" src="General_functions.js"></script>
 
-    <!--On load of the page, open the 'defaultOpen tab'-->
-    <body onload="document.getElementById('defaultOpen').click();"> 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-        <header>
-            <div class="Navigation_Bar Navigation_Link">
-                <img class="CELLFAB_Logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
-                <a href="DataAccess.html">DATA ACCESS</a>
-                <a href="DataInput.html">DATA INPUT</a>
-                <a>DEUTSCH</a>
+    <script type="module">
+      // import latest release from npm repository 
+      import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
+      import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
+      import './env_browser.js'
+      const {url, token, org, bucket, username, password} = window.INFLUX_ENV
+      const influxDB = new InfluxDB({url, token})
+
+      var CoatingDryingSequence = 0;
+      
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      /*                                                                WRITE FUNCTIONS                                                                             */
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      // log results to HTML page
+      const logField = document.getElementById('log');
+      function log(message, ...rest){
+        console.log(arguments[0],rest)
+        const previousValue = logField.value
+        logField.value += (previousValue?'\n':'')+Array.prototype.slice.call(arguments).join('\n')
+        // scroll to bottom with latest results
+        logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
+      }
+
+      // write data into influx db
+      function writeInflux(variable,value) {
+        const writeApi = influxDB.getWriteApi(org, bucket)
+        const point1 = new Point('CELLFAB-Measurement')
+          .floatField(variable, value)
+
+        writeApi.writePoint(point1)
+        log("    "+ variable + " = " + value)
+
+        // flush pending writes and close writeApi
+        writeApi
+          .close()
+          .catch(e => {
+            log('WRITE FAILED', e)
+          })
+      }
+
+      //write data into Coating Steps Table
+      function writeCoatingDryingSequence(CoatingNozzleDistance, CoatingThickness) { 
+        // initialise table
+        var table = document.getElementById("Table");  
+        var row = table.insertRow(); 
+
+        // add cell to the table
+        var coatingdrying_sequence = row.insertCell(0);
+        var timestamp = row.insertCell(1);
+        var coating_nozzle_distance_cell = row.insertCell(2);
+        var coating_thickness = row.insertCell(3);
+        var remove_button_cell = row.insertCell(4);
+
+        // add remove button
+        var remove_button = document.createElement('input'); 
+        remove_button.setAttribute('type', 'button');
+        remove_button.setAttribute('value', 'Remove');
+        remove_button.setAttribute('onclick', 'removeRow(this)');
+
+        // query and initialize mixing_step & timestamp
+        var fluxQuery = 'from(bucket:"manual_process_data") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "MT_120_coatingdrying_sequence")|> tail(n: 1)';  
+        const queryApi = influxDB.getQueryApi(org)
+        queryApi.queryRows(fluxQuery, {
+        next(row, tableMeta) {
+            const o = tableMeta.toObject(row)
+            var query_CoatingDryingSequence = parseFloat(JSON.parse(`${o._value}`))
+            coatingdrying_sequence.innerHTML = query_CoatingDryingSequence; // initialize coatingdrying_sequence (coating drying step)
+
+            var time = new Date(Date.parse(`${o._time}`))
+            var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+            var Timestamp = (String(time.getDate()).padStart(2,'0') + " " + months[time.getMonth()] + " " + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
+            timestamp.innerHTML = (Timestamp); // initialize timestamp (mixing step)
+        },
+        error(error) {
+            log('QUERY FAILED', error)
+        },
+        complete() {
+        },
+        });
+        
+        // initialize table cell
+        coating_nozzle_distance_cell.innerHTML = CoatingNozzleDistance;
+        coating_thickness.innerHTML = CoatingThickness;
+        remove_button_cell.innerHTML = "<br><button type='button' onclick='removeRow(this)' >Remove </button><br>"; 
+
+        // reset input field
+        var reset_inputs = ['CoatingNozzleDistance','CoatingThickness']
+        for (let i = 0; i < reset_inputs.length; i++){
+          var temp = reset_inputs[i];
+          document.getElementById(temp).value = null;
+        }
+
+        // After starting the coating drying process, go to the Variables tab
+        if (CoatingDryingSequence == 0){
+          document.getElementById('tab_Variables').click();
+        }
+
+        // After adding the variables, go to the Coating Drying Sequence table tab
+        else{
+          alert("Coating and Drying step added");
+          document.getElementById('tab_CoatingDryingSequence').click();
+        }
+      }
+      
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      /*                                                           INITIALIZE PAGE CONTROLS                                                                         */
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      
+      // Button to start the coating & drying process
+      const button_StartCoatingDryingProcess = document.getElementById('button_StartCoatingDryingProcess')
+      button_StartCoatingDryingProcess.addEventListener('click', () => {
+        log('\n**COATING & DRYING STARTED**')
+        writeInflux('MT_120_coatingdrying_sequence',CoatingDryingSequence); // Update the Coating Drying Sequence to 0 to indicate the starting of the coating and drying process
+        writeCoatingDryingSequence("-", "-", "-", "-","-" ) // Update the Coating Drying Sequence tab to indictae the starting of the coating and drying process
+        document.getElementById("button_StartCoatingDryingProcess").disabled = true; // Disable the button so the user cannot start the process twice unless the process has ended
+        document.getElementById("button_StartCoatingDryingProcess").innerHTML="Coating and Drying Started"; // Change button display text to indicate that the process has started
+        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        document.getElementById("button_Write_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
+      })
+
+      // Button to write the variables into InfluxDB
+      const button_Write = document.getElementById('button_Write');
+      button_Write.addEventListener('click', () => {
+        log('\n**NEW COATING & DRYING STEP ADDED**')
+
+        // Update the CoatingDryingSequence and write it into InfluxDB
+        CoatingDryingSequence = CoatingDryingSequence + 1; 
+        writeInflux('MT_120_coatingdrying_sequence',CoatingDryingSequence);
+
+        // Define variables 
+        var variable_input_id = ['CoatingNozzleDistance','CoatingThickness'] // html id of the variables
+        var variable_input_influx_id = ['MS_121_slot_nozzle_anode-mm', 'CM_130_coating_thickness_anode-mm'] // Influx id of the variables
+        var Variable_values = [] // Empty matrix to store the variable values
+
+        // write the values of the variables into InfluxDB
+        for (let i=0; i < variable_input_id.length; i++){
+          const temp = document.getElementById(variable_input_id[i]);
+          const variable_input_value = Number(temp.value);
+          writeInflux(variable_input_influx_id[i],variable_input_value);
+          Variable_values[i] = variable_input_value;
+        }
+        
+        writeCoatingDryingSequence(Variable_values[0],Variable_values[1]); // update the Coating Drying Sequence tab
+        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        document.getElementById("button_Done_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
+      })
+    </script>
+  </head>
+
+  <!--On load of the page, open the 'defaultOpen tab'-->
+  <body onload="document.getElementById('defaultOpen').click();"> 
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <header>
+      <div class="Navigation_Bar Navigation_Link">
+          <img class="CELLFAB_Logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
+          <a href="DataAccess.html">DATA ACCESS</a>
+          <a href="DataInput.html">DATA INPUT</a>
+          <a>DEUTSCH</a>
+      </div>
+    </header>
+
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--                                                                   TITLE, MAIN CONTAINER                                                              -->
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <h1 class="Page_Title">Coating & Drying</h1>          
+
+    <div class="div_MainContainer">
+        
+        <!--Process flow chain showing current position of the process-->
+        <div class="div_ProcessFlow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
+            <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
+            <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
+        </div>
+        
+        <div style=" display: flex; justify-content: space-between;">
+            <h4>Batch ID: </h4>    <!-- TODO: Read batch ID from server-->
+
+            <div>
+                <!--CELLFAB OneNote Button-->
+                <a class="button_1" href="https://onedrive.live.com/redir?resid=154068B5BA211242%211807&authkey=%21AjK8kQtUBmG5oH4&page=View&wd=target%28Fertigungsprotokolle%20Q2%2022.one%7C1d1bc475-5c48-4db1-ae5c-ce649b07c107%2FZeitraum%7C86baeb91-fc20-4fc0-8944-21db69c010e6%2F%29" target="_blank">CELLFAB OneNote</a> 
             </div>
-        </header>
+        </div>
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                                   TITLE, MAIN CONTAINER                                                              -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-        <h1 class="Page_Title">Coating & Drying</h1>          
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                    TABS                                                                                  -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
-        <div class="div_MainContainer">
-            
-            <!--Process flow chain showing current position of the process-->
-            <div class="div_ProcessFlow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
-                <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
-                <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
-            </div>
-            
-            <div style=" display: flex; justify-content: space-between;">
-                <h4>Batch ID: </h4>    <!-- TODO: Read batch ID from server-->
+        <div class="div_Tab">
+          <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
+          <button class="button_TabLinks" onclick="openTab(event, 'Variables')" id = tab_Variables>Variables</button>
+          <button class="button_TabLinks" onclick="openTab(event, 'CoatingDryingSequence')" id = "tab_CoatingDryingSequence">Coating & Drying Sequence</button> 
+          <button class="button_TabLinks" onclick="openTab(event, 'Log')" id = "tab_Log">Log</button>                
+        </div>
 
-                <div>
-                    <a class="button_1" href="https://onedrive.live.com/redir?resid=154068B5BA211242%211807&authkey=%21AjK8kQtUBmG5oH4&page=View&wd=target%28Fertigungsprotokolle%20Q2%2022.one%7C1d1bc475-5c48-4db1-ae5c-ce649b07c107%2FZeitraum%7C86baeb91-fc20-4fc0-8944-21db69c010e6%2F%29">CELLFAB OneNote</a> 
-                </div>
-            </div>
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                  MANUAL TAB                                                                              -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                                    TABS                                                                                  -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <div id="Manual" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
+          <br>
+          During the coating process, the slurries are then coated upon both sides of the metal foils using and application tool. <br><br>
+          After coating, the coated wet electrode is delivered to the dryer to evaporate the solvent from the material by heat supply. <br><br>
 
-            <div class="div_Tab">
-                <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
-                <button class="button_TabLinks" onclick="openTab(event, 'Variables')">Variables</button>
-                <button class="button_TabLinks" onclick="openTab(event, 'TableTab')" id = "Table_tab">Coating & Drying Steps</button>                 
-            </div>
+          &bull; The button "CELLFAB OneNote" directs you to the OneNote Notebook of the process for more information. <br><br>
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                                  MANUAL TAB                                                                              -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+          &bull; Start the coating & drying process by pressing the "Start Coating & DryingProcess" button at bottom left.  <br><br>
+        
+          <button class="button_2" id="button_StartCoatingDryingProcess">Start Coating & Drying Process</button>
+        </div>
 
-            <div id="Manual" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
-                <br>
-                The coating and drying process
-            </div>
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                 VARIABLEs TAB                                                                            -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                               ADD VARIABLE TAB                                                                           -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+        <div id="Variables" class="div_TabContent">
+          <h3>Please choose the material added for the coating and drying step and enter the value for each variables. Then, press 'Write to InfluxDB' button</h3> 
 
-            <div id="Variables" class="div_TabContent">
-                <h3>Please enter the variables and press the 'Done' button</h3> 
+          <div class="div_AddVariable">
+              <div class="div_AddVariableLeft"> 
 
-                <div class="div_AddVariable">
-                    <div class="div_AddVariableLeft">
+                <!---------------------------------------->
+                <!-- VARIABLE : COATING NOZZLE DISTANCE -->
+                <!---------------------------------------->
+                <img class="img_VariableIcon" src="Images\CoatingDrying\coating_nozzle_distance_icon.png" alt="Coating Nozzle Distance icon">
+                <label class="ProcessVariables">&emsp;Coating Nozzle Distance</label>
+                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                    <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                </a> 
+                <input class ="ProcessInput"type="number" id="CoatingNozzleDistance">
+                <label class="ProcessInputUnit">mm</label><br><br><br>
 
-                        <!-------------------------->
-                        <!-- VARIABLE : THICKNESS -->
-                        <!-------------------------->
-                        <img class="img_VariableIcon" src="Images\CoatingDrying\thickness_wet_icon.png" alt="thickness wet icon">
-                        <label class="ProcessVariables">&emsp;Thickness (wet)</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a> 
-                        <input class ="ProcessInput"id="ThicknessWet" type="number" name="ThicknessWet">
-                        <label class="ProcessInputUnit">mm</label><br><br><br><br>
-                        
-                        <!------------------------------>
-                        <!-- VARIABLE : COATING WIDTH -->
-                        <!------------------------------>
-                        <img class="img_VariableIcon" src="Images\CoatingDrying\width_icon.png" alt="Time icon">
-                        <label class="ProcessVariables">&emsp;Coating Width</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a> 
-                        <input class ="ProcessInput"id="CoatingWidth" type="number" name="CoatingWidth">
-                        <label class="ProcessInputUnit">mm</label><br><br><br><br>
+                <!---------------------------------->
+                <!-- VARIABLE : COATING THICKNESS -->
+                <!---------------------------------->
+                <img class="img_VariableIcon" src="Images\CoatingDrying\coating_thickness_icon.png" alt="Coating Thickness icon"> <!--TODO : Change icon-->
+                <label class="ProcessVariables">&emsp;Coating Thickness</label>
+                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                    <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                </a> 
+                <input class ="ProcessInput"type="number" id="CoatingThickness">
+                <label class="ProcessInputUnit">mm</label><br><br><br>
 
-                        <!-------------------------------->
-                        <!-- VARIABLE : THICKNESS (DRY) -->
-                        <!-------------------------------->
-                        <img class="img_VariableIcon" src="Images\CoatingDrying\thickness_dry_icon.png" alt="thickness dry icon">
-                        <label class="ProcessVariables">&emsp;Thickness (dry)</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a>   
-                        <input class ="ProcessInput"id="ThicknessDry" type="number" name="ThicknessDry">
-                        <label class="ProcessInputUnit">mm</label><br><br><br><br>
+                <button class="button_2" id="button_Write" disabled >Write to InfluxDB</button>
+                <label id="button_Write_hint">&emsp;Please start the coating & drying process before you add the variables</label>
+              </div>
+          </div>                    
+        </div>
 
-                        <!------------------------->
-                        <!-- VARIABLE : ADHESION -->
-                        <!------------------------->
-                        <img class="img_VariableIcon" src="Images\\CoatingDrying\adhesion_icon.png" alt="Speed icon">
-                        <label class="ProcessVariables">&emsp;Adhesion</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a>   
-                        <input class ="ProcessInput"id="Adhesion" type="number" name="Adhesion">
-                        <label class="ProcessInputUnit">MPascal</label><br><br><br><br>
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                             MIXING SEQUENCE TAB                                                                          -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->                
+        <div id="CoatingDryingSequence" class="div_TabContent">
+          <table id="Table"> 
+              <tr> 
+                  <th>Coating & Drying Sequence</th>
+                  <th>Timestamp<br>[hh:mm:ss]</th>
+                  <th>Coating Nozzle Distance<br>[mm]</th>
+                  <th>Coating Thickness<br>[mm]</th>
+                  <th>&emsp;&emsp;&emsp;</th> 
+              </tr>
+          </table> <br>
+          
+            <button class="button_1" onclick="downlaodCSV('CoatingDrying')" id="button_csv" style="margin-left: 85%; ;">Download CSV</button>
 
-                        <!---------------------------------->
-                        <!-- VARIABLE : RESIDUAL MOISTURE -->
-                        <!---------------------------------->
-                        <img class="img_VariableIcon" src="Images\\CoatingDrying\residual_moisture_icon.png" alt="Viscosity icon">
-                        <label class="ProcessVariables">&emsp;Residual Moisture</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a>   
-                        <input class ="ProcessInput"id="ResidualMoisture" type="number" name="ResidualMoisture">
-                        <label class="ProcessInputUnit">%</label><br><br><br>
-
-                        <!-------------------------------------->
-                        <!-- VARIABLE : ADD VARIABLE TEMPLATE -->
-                        <!-------------------------------------->
-                        <!--
-                            <img class="img_VariableIcon" src="Images\CoatingDrying\**NAME_OF_VARIABLE_ICON**" alt="**NAME_OF_VARIABLE** icon">
-                            <a class="ProcessVariables" href="**ONE_NOTE_PAGE_ADDRESS**">&emsp;**NAME_OF_VARIABLE**</a>  
-                            <input class ="ProcessInput" id="**NAME_OF_VARIABLE_NO_SPACE**" type="number" name="**NAME_OF_VARIABLE_NO_SPACE**">
-                            <label class="ProcessInputUnit">**VARIABLE_UNIT**</label><br><br><br><br>
-                        -->
-                        
-                        <!--------------------------->
-                        <!-- BUTTON : ADD VARIABLE -->
-                        <!--------------------------->
-                        <button class="button_2" onclick="addVariable(
-                            document.getElementById('ThicknessWet').value, 
-                            document.getElementById('CoatingWidth').value,
-                            document.getElementById('ThicknessDry').value,
-                            document.getElementById('Adhesion').value,
-                            document.getElementById('ResidualMoisture').value
-                            /*------------------------------------
-                            --- BUTTON : ADD VARIABLE TEMPLATE ---
-                            --------------------------------------
-                            ,document.getElementById('**NAME_OF_VARIABLE_NO_SPACE**').value */
-                            )">
-                            <span>Add Variable</span>
-                        </button> <br><br>
-
-                    </div>
-                    
-                    <!----------------------------------->
-                    <!-- MATERIAL & INSTRUMENT SUBTABS -->
-                    <!----------------------------------->
-                    <div class="div_AddVariableRight">
-                        <div class="div_SubTab">
-                            <button class="button_SubTabLinks" onclick="openSubTab(event, 'Material')" >Material</button>
-                            <button class="button_SubTabLinks" onclick="openSubTab(event, 'Instruments')" >Instruments</button> 
-                        </div>
-
-                        <div id="Material" class="div_SubTabContent">
-                            this is tab for materials
-                        </div>
-    
-                        <div id="Instruments" class="div_SubTabContent">
-                            this is tab for instruments
-                        </div>
-                    </div>
-                </div>                    
+            <!-- Done button -->
+            <button class="button_2" onclick="doneProcess('CoatingDrying')" id="button_Done" disabled>Coating & Drying Done</button>
+            <label id="button_Done_hint">&emsp;Add at least one coating & drying sequence to end the coating & drying process</label>
+            <br><br>
             </div>
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                                  TABLE TAB                                                                               -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->                
-            <div id="TableTab" class="div_TabContent">
-                <table id="Table"> 
-                    <tr> 
-                        <th>Thickness Wet</th>
-                        <th>Coating Width</th>
-                        <th>Thickness Dry</th>
-                        <th>Adhesion</th>
-                        <th>Residual Moisture</th>
-                        <!------------------------------->
-                        <!-- ADD TABLE COLUMN TEMPLATE -->
-                        <!------------------------------->
-                        <!--
-                            <th>**NAME_OF_VARIABLE** **VARIABLE_UNIT**</th>
-                        -->
-                        <th>&emsp;&emsp;&emsp;</th> 
-                    </tr> <tr></tr>
-                </table> <br><br><br>
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                  LOG TAB                                                                                 -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->              
+        <div id="Log" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
+          <fieldset id="log_area">
+            <legend>Log</legend>
+            <textarea
+              id="log"
+              style="width: 100%"
+              rows="25"
+            ></textarea>
+            <button onclick="document.getElementById('log').value=''">Clear Log</button>
+          </fieldset>
+        </div>
 
-                <div id="counterDiv" style="display:none"> <input id="counter" type="number" value="0" readonly></div>
-
-                <!-- Done button -->
-                <button class="button_2" onclick="doneProcess()">
-                    <span>Coating & Drying Done</span>
-                </button> <br><br>
-            </div>
-        </div>         
-    </body>
+      </div>
+    </div>
+  </body>
 </html>
