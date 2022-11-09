@@ -3,8 +3,8 @@
     <title>Coating and Drying</title>
 
     <!--Connect the css file and the js file-->
-    <link rel="stylesheet" type="text/css" href="CoatingDrying_style.css">
     <link rel="stylesheet" type="text/css" href="General_style.css">
+    <link rel="stylesheet" type="text/css" href="CoatingDrying_style.css">
     <script type="text/javascript" src="CoatingDrying.js"></script>
     <script type="text/javascript" src="General_functions.js"></script>
 
@@ -67,7 +67,7 @@
         remove_button.setAttribute('value', 'Remove');
         remove_button.setAttribute('onclick', 'removeRow(this)');
 
-        // query and initialize mixing_step & timestamp
+        // query and initialize coatingdrying_step & timestamp
         var fluxQuery = 'from(bucket:"manual_process_data") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "MT_120_coatingdrying_sequence")|> tail(n: 1)';  
         const queryApi = influxDB.getQueryApi(org)
         queryApi.queryRows(fluxQuery, {
@@ -79,7 +79,7 @@
             var time = new Date(Date.parse(`${o._time}`))
             var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
             var Timestamp = (String(time.getDate()).padStart(2,'0') + " " + months[time.getMonth()] + " " + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
-            timestamp.innerHTML = (Timestamp); // initialize timestamp (mixing step)
+            timestamp.innerHTML = (Timestamp); // initialize timestamp (coating drying step)
         },
         error(error) {
             log('QUERY FAILED', error)
@@ -228,7 +228,7 @@
 
           &bull; The button "CELLFAB OneNote" directs you to the OneNote Notebook of the process for more information. <br><br>
 
-          &bull; Start the coating & drying process by pressing the "Start Coating & DryingProcess" button at bottom left.  <br><br>
+          &bull; Start the coating & drying process by pressing the "Start Coating & Drying Process" button at bottom left.  <br><br>
         
           <button class="button_2" id="button_StartCoatingDryingProcess">Start Coating & Drying Process</button>
         </div>
@@ -238,7 +238,7 @@
         <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
 
         <div id="Variables" class="div_TabContent">
-          <h3>Please choose the material added for the coating and drying step and enter the value for each variables. Then, press 'Write to InfluxDB' button</h3> 
+          <h3>Please enter the value for each variables for the coating and drying process. Then, press 'Write to InfluxDB' button</h3> 
 
           <div class="div_AddVariable">
               <div class="div_AddVariableLeft"> 
@@ -271,9 +271,9 @@
           </div>                    
         </div>
 
-        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-        <!--                                                             MIXING SEQUENCE TAB                                                                          -->
-        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->                
+        <!---------------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                             COATING DRYING SEQUENCE TAB                                                                          -->
+        <!---------------------------------------------------------------------------------------------------------------------------------------------------------------------->                
         <div id="CoatingDryingSequence" class="div_TabContent">
           <table id="Table"> 
               <tr> 

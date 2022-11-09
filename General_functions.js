@@ -20,9 +20,15 @@ function openTab(evt, TabName) {
     }
 
     if (process =="CoatingDrying"){
-        window.location.href = 'Calendaring.html';  // navigate page to calendaring
+        window.location.href = 'Calendering.html';  // navigate page to calendaring
         document.getElementById("button_StartCoatingDryingProcess").disabled = false; // Process has ended, the user can start new coating drying process if needed
-        document.getElementById("button_StartCoatingDryingProcess").innerHTML="Start Mixing Process"; // Change button display text
+        document.getElementById("button_StartCoatingDryingProcess").innerHTML="Start Coating & Drying Process"; // Change button display text
+    }
+
+    if (process =="Calendering"){
+      window.location.href = 'Slitting.html';  // navigate page to calendaring
+      document.getElementById("button_StartCalenderingProcess").disabled = false; // Process has ended, the user can start new calendering process if needed
+      document.getElementById("button_StartCalenderingProcess").innerHTML="Start Calendering Process"; // Change button display text
     }
     
     document.getElementById("button_Write").disabled = true; // Disable the "Write to InfluxDB" button in the Variables tab unless the mixing process button is pressed (mixing started)
