@@ -30,6 +30,12 @@ function openTab(evt, TabName) {
       document.getElementById("button_StartCalenderingProcess").disabled = false; // Process has ended, the user can start new calendering process if needed
       document.getElementById("button_StartCalenderingProcess").innerHTML="Start Calendering Process"; // Change button display text
     }
+
+    if (process =="Slitting"){
+      window.location.href = 'VacuumDrying.html';  // navigate page to calendaring
+      document.getElementById("button_StartSlittingProcess").disabled = false; // Process has ended, the user can start new slitting process if needed
+      document.getElementById("button_StartSlittingProcess").innerHTML="Start Slitting Process"; // Change button display text
+    }
     
     document.getElementById("button_Write").disabled = true; // Disable the "Write to InfluxDB" button in the Variables tab unless the mixing process button is pressed (mixing started)
     document.getElementById("button_Write_hint").hidden = false; // Show the hint (tells the user to start the mixing process before adding variables) in the variable tab
@@ -97,6 +103,6 @@ function openTab(evt, TabName) {
   }
 
   function removeRow(oButton) {
-    var MixingTable = document.getElementById('Table');
-    MixingTable.deleteRow(oButton.parentNode.parentNode.rowIndex);
+    var Table = document.getElementById('Table');
+    Table.deleteRow(oButton.parentNode.parentNode.rowIndex);
   }  

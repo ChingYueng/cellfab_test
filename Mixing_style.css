@@ -1,8 +1,6 @@
 body
 {
-  font-family: 'Montserrat', sans-serif;
   background-image: url(Images/Mixing/Background_Mixing.png);
-  background-size: cover;
 }
  
 /* Process flow popup - hidden by default */
