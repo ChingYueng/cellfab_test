@@ -67,32 +67,11 @@
         remove_button.setAttribute('value', 'Remove');
         remove_button.setAttribute('onclick', 'removeRow(this)');
 
-        // query and initialize coatingdrying_step & timestamp
-        /*var fluxQuery = 'from(bucket:"manual_process_data") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "MT_120_coatingdrying_sequence")|> tail(n: 1)';  
-        const queryApi = influxDB.getQueryApi(org)
-        queryApi.queryRows(fluxQuery, {
-        next(row, tableMeta) {
-            const o = tableMeta.toObject(row)
-            var query_CoatingDryingSequence = parseFloat(JSON.parse(`${o._value}`))
-            coatingdrying_sequence.innerHTML = query_CoatingDryingSequence; // initialize coatingdrying_sequence (coating drying step)
-
-            var time = new Date(Date.parse(`${o._time}`))
-            var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-            var Timestamp = (String(time.getDate()).padStart(2,'0') + " " + months[time.getMonth()] + " " + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
-            timestamp.innerHTML = (Timestamp); // initialize timestamp (coating drying step)
-        },
-        error(error) {
-            log('QUERY FAILED', error)
-        },
-        complete() {
-        },
-        });*/
-
         coatingdrying_sequence.innerHTML = CoatingDryingSequence;
 
         var today = new Date();
-        var date = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
-        var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+        var date = today.getFullYear()+'-'+(today.getMonth()+1).padStart(2,'0')+'-'+today.getDate().padStart(2,'0');
+        var time = today.getHours().padStart(2,'0') + ":" + today.getMinutes().padStart(2,'0') + ":" + today.getSeconds().padStart(2,'0');
         timestamp.innerHTML = (date + " " + time);
         
         // initialize table cell

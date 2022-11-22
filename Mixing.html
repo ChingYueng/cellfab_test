@@ -71,25 +71,12 @@
         remove_button.setAttribute('onclick', 'removeRow(this)');
 
         // query and initialize mixing_step & timestamp
-        var fluxQuery = 'from(bucket:"manual_process_data") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "MT_110_mixing_sequence")|> tail(n: 1)';  
-        const queryApi = influxDB.getQueryApi(org)
-        queryApi.queryRows(fluxQuery, {
-        next(row, tableMeta) {
-            const o = tableMeta.toObject(row)
-            var query_MixingSequence = parseFloat(JSON.parse(`${o._value}`))
-            mixing_sequence.innerHTML = query_MixingSequence; // initialize mixing_sequence (mixing step)
+        mixing_sequence.innerHTML = MixingSequence;
 
-            var time = new Date(Date.parse(`${o._time}`))
-            var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-            var Timestamp = (String(time.getDate()).padStart(2,'0') + " " + months[time.getMonth()] + " " + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
-            timestamp.innerHTML = (Timestamp); // initialize timestamp (mixing step)
-        },
-        error(error) {
-            log('QUERY FAILED', error)
-        },
-        complete() {
-        },
-        });
+        var today = new Date();
+        var date = today.getFullYear()+'-'+(today.getMonth()+1).padStart(2,'0')+'-'+today.getDate().padStart(2,'0');
+        var time = today.getHours().padStart(2,'0') + ":" + today.getMinutes().padStart(2,'0') + ":" + today.getSeconds().padStart(2,'0');
+        timestamp.innerHTML = (date + " " + time);
         
         // initialize table cell
         material_cell.innerHTML = Materials;
