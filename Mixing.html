@@ -16,7 +16,7 @@
       const {url, token, org, bucket, username, password} = window.INFLUX_ENV
       const influxDB = new InfluxDB({url, token})
 
-      var MixingSequence = 0;
+      var MixingSequence = 0 ;
       
       /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
       /*                                                                WRITE FUNCTIONS                                                                             */
@@ -324,7 +324,7 @@
                     <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
                         <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                     </a>
-                    <input class ="ProcessInput"type="text" id="Water" >
+                    <input class ="ProcessInput"type="number" id="Water" >
                     <label class="ProcessInputUnit" >Litre</label><br>
                 </p>
 
@@ -337,7 +337,7 @@
                   <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
                       <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                   </a>
-                  <input class ="ProcessInput"type="text" id="SBR" >
+                  <input class ="ProcessInput"type="number" id="SBR" >
                   <label class="ProcessInputUnit" >grams</label>
                 </p>
 
@@ -350,7 +350,7 @@
                   <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
                       <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                   </a>
-                  <input class ="ProcessInput"type="text" id="Graphite" >
+                  <input class ="ProcessInput"type="number" id="Graphite" >
                   <label class="ProcessInputUnit" >grams</label>
                 </p>
 
@@ -363,7 +363,7 @@
                   <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
                       <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                   </a>
-                  <input class ="ProcessInput"type="text" id="CMC" >
+                  <input class ="ProcessInput"type="nzmber" id="CMC" >
                   <label class="ProcessInputUnit" >grams</label>
                 </p>
 
@@ -376,7 +376,7 @@
                   <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
                       <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                   </a>
-                  <input class ="ProcessInput"type="text" id="Russ" >
+                  <input class ="ProcessInput"type="number" id="Russ" >
                   <label class="ProcessInputUnit" >grams</label>
                 </p>
 
@@ -389,7 +389,7 @@
                   <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
                       <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                   </a>
-                  <input class ="ProcessInput"type="text" id="SG3" >
+                  <input class ="ProcessInput"type="number" id="SG3" >
                   <label class="ProcessInputUnit" >grams</label>
                 </p>
 
@@ -473,7 +473,6 @@
             <button onclick="document.getElementById('log').value=''">Clear Log</button>
           </fieldset>
         </div>
-
       </div>
     </div>
   </body>
