@@ -71,8 +71,8 @@
         calendering_sequence.innerHTML = CalenderingSequence;
 
         var today = new Date();
-        var date = today.getFullYear()+'-'+(today.getMonth()+1).padStart(2,'0')+'-'+today.getDate().padStart(2,'0');
-        var time = today.getHours().padStart(2,'0') + ":" + today.getMinutes().padStart(2,'0') + ":" + today.getSeconds().padStart(2,'0');
+        var date = today.getFullYear()+'-'+(today.getMonth()+1).padStart(2,'0')+'-'+ (today.getDate()).padStart(2,'0');
+        var time = (today.getHours()).padStart(2,'0') + ":" + (today.getMinutes()).padStart(2,'0') + ":" + (today.getSeconds()).padStart(2,'0');
         timestamp.innerHTML = (date + " " + time);
         
         // initialize table cell
