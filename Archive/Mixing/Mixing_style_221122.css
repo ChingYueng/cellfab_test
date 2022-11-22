@@ -1,0 +1,39 @@
+body
+{
+  background-image: url(Images/Mixing/Background_Mixing.png);
+}
+ 
+/* Process flow popup - hidden by default */
+.popup_ProcessFlow 
+{
+  background-color: white;
+  display: none;
+  position: fixed;
+  bottom: 1%;
+  right: 15px;
+  border: 5px solid black;
+  z-index: 9;
+  width: 50%;
+  height : 90%;
+}
+
+/* Button to close the pop up */
+.button_PopUpCancel 
+{
+  background-color: red;
+  opacity: 50%;
+}
+
+.button_PopUpCancel:hover 
+{
+  opacity: 100%;
+}
+
+.img_ProcessFlow
+{
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width:70%;
+    height:90%
+}

@@ -1,0 +1,479 @@
+<html>
+  <head>
+    <title>Mixing and Dispersing</title>
+
+    <!--Connect the css file and the js file-->
+    <link rel="stylesheet" type="text/css" href="General_style.css">
+    <link rel="stylesheet" type="text/css" href="Mixing_style.css">
+    <script type="text/javascript" src="Mixing.js"></script>
+    <script type="text/javascript" src="General_functions.js"></script>
+
+    <script type="module">
+      // import latest release from npm repository 
+      import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
+      import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
+      import './env_browser.js'
+      const {url, token, org, bucket, username, password} = window.INFLUX_ENV
+      const influxDB = new InfluxDB({url, token})
+
+      var MixingSequence = 0 ;
+      
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      /*                                                                WRITE FUNCTIONS                                                                             */
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      // log results to HTML page
+      const logField = document.getElementById('log');
+      function log(message, ...rest){
+        console.log(arguments[0],rest)
+        const previousValue = logField.value
+        logField.value += (previousValue?'\n':'')+Array.prototype.slice.call(arguments).join('\n')
+        // scroll to bottom with latest results
+        logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
+      }
+
+      // write data into influx db
+      function writeInflux(variable,value) {
+        const writeApi = influxDB.getWriteApi(org, bucket)
+        const point1 = new Point('CELLFAB-Measurement')
+          .floatField(variable, value)
+
+        writeApi.writePoint(point1)
+        log("    "+ variable + " = " + value)
+
+        // flush pending writes and close writeApi
+        writeApi
+          .close()
+          .catch(e => {
+            log('WRITE FAILED', e)
+          })
+      }
+
+      //write data into Mixing Steps Table
+      function writeMixingSequence(Materials, Weight, Viscosity, ParticleSize_ActiveMaterial,ParticleSize_Slurry ) { 
+        // initialise table
+        var table = document.getElementById("Table");  
+        var row = table.insertRow(); 
+
+        // add cell to the table
+        var mixing_sequence = row.insertCell(0);
+        var timestamp = row.insertCell(1);
+        var material_cell = row.insertCell(2);
+        var weight_cell = row.insertCell(3);
+        var viscosity_cell = row.insertCell(4);
+        var particle_size_active_material_cell = row.insertCell(5);
+        var particle_size_slurry_cell = row.insertCell(6);
+        var remove_button_cell = row.insertCell(7);
+
+        // add remove button
+        var remove_button = document.createElement('input'); 
+        remove_button.setAttribute('type', 'button');
+        remove_button.setAttribute('value', 'Remove');
+        remove_button.setAttribute('onclick', 'removeRow(this)');
+
+        // query and initialize mixing_step & timestamp
+        var fluxQuery = 'from(bucket:"manual_process_data") |> range(start: -1d) |> filter(fn: (r) => r._measurement == "CELLFAB-Measurement" and r._field == "MT_110_mixing_sequence")|> tail(n: 1)';  
+        const queryApi = influxDB.getQueryApi(org)
+        queryApi.queryRows(fluxQuery, {
+        next(row, tableMeta) {
+            const o = tableMeta.toObject(row)
+            var query_MixingSequence = parseFloat(JSON.parse(`${o._value}`))
+            mixing_sequence.innerHTML = query_MixingSequence; // initialize mixing_sequence (mixing step)
+
+            var time = new Date(Date.parse(`${o._time}`))
+            var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+            var Timestamp = (String(time.getDate()).padStart(2,'0') + " " + months[time.getMonth()] + " " + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
+            timestamp.innerHTML = (Timestamp); // initialize timestamp (mixing step)
+        },
+        error(error) {
+            log('QUERY FAILED', error)
+        },
+        complete() {
+        },
+        });
+        
+        // initialize table cell
+        material_cell.innerHTML = Materials;
+        weight_cell.innerHTML = Weight; 
+        viscosity_cell.innerHTML = Viscosity;
+        particle_size_active_material_cell.innerHTML = ParticleSize_ActiveMaterial;
+        particle_size_slurry_cell.innerHTML = ParticleSize_Slurry;
+        remove_button_cell.innerHTML = "<br><button type='button' onclick='removeRow(this)' >Remove </button><br>"; 
+
+        // reset material checkbox
+        var reset_checkbox = ['checkbox_AddWater','checkbox_AddSBR','checkbox_AddGraphite','checkbox_AddCMC','checkbox_AddRuss','checkbox_AddSG3']
+        for (let i = 0; i < reset_checkbox.length; i++){
+          var temp = reset_checkbox[i];
+          document.getElementById(temp).checked = false;
+        }
+        // reset material input visibility
+        var reset_input_visibility = ['water','SBR','graphite','CMC','russ','SG3']
+        for (let i = 0; i < reset_input_visibility.length; i++){
+          var temp = reset_input_visibility[i];
+          showVariableInputBox(temp)
+        }
+        // reset input field
+        var reset_inputs = ['Water','SBR','Graphite','CMC','Russ','SG3','Viscosity','Particle_size_active_material','Particle_size_slurry']
+        for (let i = 0; i < reset_inputs.length; i++){
+          var temp = reset_inputs[i];
+          document.getElementById(temp).value = null;
+        }
+
+        // After starting the mixing process, go to the Variables tab
+        if (MixingSequence == 0){
+          document.getElementById('tab_Variables').click();
+        }
+
+        // After adding the variables, go to the Mixing Sequence table tab
+        else{
+          alert("Mixing step added");
+          document.getElementById('tab_MixingSequence').click();
+        }
+      }
+      
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      /*                                                           INITIALIZE PAGE CONTROLS                                                                         */
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      
+      // Button to start the mixing process
+      const button_StartMixingProcess = document.getElementById('button_StartMixingProcess')
+      button_StartMixingProcess.addEventListener('click', () => {
+        log('\n**MIXING STARTED**')
+        writeInflux('MT_110_mixing_sequence',MixingSequence); // Update the Mixing Sequence to 0 to indicate the starting of the mixing process
+        writeMixingSequence("-", "-", "-", "-","-" ) // Update the Mixing Sequence tab to indictae the starting of the mixing process
+        document.getElementById("button_StartMixingProcess").disabled = true; // Disable the button so the user cannot start the process twice unless the process has ended
+        document.getElementById("button_StartMixingProcess").innerHTML="Mixing Started"; // Change button display text to indicate that the process has started
+        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        document.getElementById("button_Write_hint").hidden = true; // Hide the hint (tells the user to start the mixing process before adding variables) in the variable tab
+      })
+
+      // Button to write the variables into InfluxDB
+      const button_Write = document.getElementById('button_Write');
+      button_Write.addEventListener('click', () => {
+        log('\n**NEW MIXING STEP ADDED**')
+
+        // Update the MixingSequence and write it into InfluxDB
+        MixingSequence = MixingSequence + 1; 
+        writeInflux('MT_110_mixing_sequence',MixingSequence);
+
+        // Define variables 
+        var Material = ""   // String variable for Material column
+        var Weight = ""     // String variable for Weight column
+        var material_checkboxes = ['checkbox_AddWater','checkbox_AddSBR','checkbox_AddGraphite','checkbox_AddCMC','checkbox_AddRuss','checkbox_AddSG3']; // html id of material checkboxes
+        var material_input_id = ['Water','SBR','Graphite','CMC','Russ','SG3']; // html id for material weight input values
+        var material_checkboxes_influx_id = ['MS_110_material_checkbox_water','MS_110_material_checkbox_sbr','MS_110_material_checkbox_graphite','MS_110_material_checkbox_cmc','MS_110_material_checkbox_russ','MS_110_material_checkbox_sg3']; // Influx id of material checkboxes
+        var material_input_influx_id = ['MS_112_material_weight_water-grams','MS_112_material_weight_sbr-grams','MS_112_material_weight_graphite-grams','MS_112_material_weight_cmc-grams','MS_112_material_weight_russ-grams','MS_112_material_weight_sg3-grams']; // Influx id of material weights
+        
+        var variable_input_id = ['Viscosity','Particle_size_active_material','Particle_size_slurry'] // html id of the other variables
+        var variable_input_influx_id = ['CM_111_viscosity_cathode-mPas', 'CM_113_particle_size_active_material-micrometer', 'CM_113_particle_size_slurry-micrometer'] // Influx id of the other variables
+        var Variable_values = [] // Empty matrix to store the variable values
+
+        // write the values of the material checkbox and material weight into InfluxDB 
+        for (let i=0; i < material_checkboxes.length; i++){
+          const temp = document.getElementById(material_input_id[i]);
+          const material_input_value = Number(temp.value)
+          if ( document.getElementById(material_checkboxes[i]).checked == true){
+            writeInflux(material_checkboxes_influx_id[i],1);
+            writeInflux(material_input_influx_id[i],material_input_value);
+            Material = Material + material_input_id[i] + "<br>";
+            Weight = Weight + material_input_value + "<br>";
+          }
+          else{
+            writeInflux(material_checkboxes_influx_id[i],0);
+            writeInflux(material_input_influx_id[i],material_input_value);
+          }
+        }
+        
+        // write the values of the other variables into InfluxDB
+        for (let i=0; i < variable_input_id.length; i++){
+          const temp = document.getElementById(variable_input_id[i]);
+          const variable_input_value = Number(temp.value);
+          writeInflux(variable_input_influx_id[i],variable_input_value);
+          Variable_values[i] = variable_input_value;
+        }
+        
+        
+        writeMixingSequence(Material,Weight,Variable_values[0],Variable_values[1],Variable_values[2]); // update the Mixing Sequence tab
+        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        document.getElementById("button_Done_hint").hidden = true; // Hide the hint (tells the user to start the mixing process before adding variables) in the variable tab
+      })
+
+    </script>
+  </head>
+
+  <!--On load of the page, open the 'defaultOpen tab'-->
+  <body onload="document.getElementById('defaultOpen').click();"> 
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <header>
+      <div class="Navigation_Bar Navigation_Link">
+          <img class="CELLFAB_Logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
+          <a href="DataAccess.html">DATA ACCESS</a>
+          <a href="DataInput.html">DATA INPUT</a>
+          <a>DEUTSCH</a>
+      </div>
+    </header>
+
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--                                                                   TITLE, MAIN CONTAINER                                                              -->
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <h1 class="Page_Title">Mixing & Dispersing</h1>          
+
+    <div class="div_MainContainer">
+        
+        <!--Process flow chain showing current position of the process-->
+        <div class="div_ProcessFlow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
+            <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
+            <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
+        </div>
+        
+        <div style=" display: flex; justify-content: space-between;">
+            <h4>Batch ID: </h4>    <!-- TODO: Read batch ID from server-->
+
+            <div>
+                <!--Reference Process Flow Button-->
+                <button class="button_1" onclick="openProcessFlow()">Reference Process Flow</button>
+                <div class="popup_ProcessFlow" id="popup_ProcessFlow">
+                    <button type="button" class="button_PopUpCancel" onclick="closeProcessFlow()">x</button> <br>
+                    <img class="img_ProcessFlow"src="Images\Mixing\MixingProcessFlow.png" alt="Image of Process Flow">
+                </div>
+
+                <!--CELLFAB OneNote Button-->
+                <a class="button_1" href="https://onedrive.live.com/redir?resid=154068B5BA211242%211807&authkey=%21AjK8kQtUBmG5oH4&page=View&wd=target%28Fertigungsprotokolle%20Q2%2022.one%7C1d1bc475-5c48-4db1-ae5c-ce649b07c107%2FZeitraum%7C86baeb91-fc20-4fc0-8944-21db69c010e6%2F%29" target="_blank">CELLFAB OneNote</a> 
+            </div>
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                    TABS                                                                                  -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+
+        <div class="div_Tab">
+          <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
+          <button class="button_TabLinks" onclick="openTab(event, 'Variables')" id = tab_Variables>Variables</button>
+          <button class="button_TabLinks" onclick="openTab(event, 'MixingSequence')" id = "tab_MixingSequence">Mixing Sequence</button> 
+          <button class="button_TabLinks" onclick="openTab(event, 'Log')" id = "tab_Log">Log</button>                
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                  MANUAL TAB                                                                              -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+
+        <div id="Manual" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
+          <br>
+          The mixing process aims to produce a homogeneous slurry without destroying the material structures by accessive shear force. <br><br>
+
+          &bull; The button "Reference Process Flow" shows an example process flow that was normally used for reference. <br><br>
+
+          &bull; The button "CELLFAB OneNote" directs you to the OneNote Notebook of the process for more information. <br><br>
+
+          &bull; Start the mixing process by pressing the "Start Mixing Process" button at bottom left.  <br><br>
+        
+          <button class="button_2" id="button_StartMixingProcess">Start Mixing Process</button>
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                 VARIABLEs TAB                                                                            -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+
+        <div id="Variables" class="div_TabContent">
+          <h3>Please choose the material added for the mixing step and enter the value for each variables. Then, press 'Write to InfluxDB' button</h3> 
+
+          <div class="div_AddVariable">
+              <div class="div_AddVariableLeft">
+
+                <img class="img_VariableIcon" src="Images\Mixing\material_icon.png" alt="Materials icon">
+                <label class="ProcessVariables">&emsp;Materials: </label>
+
+                <input type="checkbox" id="checkbox_AddWater" name="checkbox_AddWater" onClick="showVariableInputBox('water')">
+                <label for="checkbox_AddWater"> Distilled Water</label>
+
+                <input type="checkbox" id="checkbox_AddSBR" name="checkbox_AddSBR" onClick="showVariableInputBox('SBR')">
+                <label for="checkbox_AddSBR"> SBR</label>
+
+                <input type="checkbox" id="checkbox_AddGraphite" name="checkbox_AddGraphite" onClick="showVariableInputBox('graphite')">
+                <label for="checkbox_AddGraphite"> Graphite</label>
+
+                <input type="checkbox" id="checkbox_AddCMC" name="checkbox_AddCMC" onClick="showVariableInputBox('CMC')">
+                <label for="checkbox_AddCMC"> CMC</label>
+
+                <input type="checkbox" id="checkbox_AddRuss" name="checkbox_AddRuss" onClick="showVariableInputBox('russ')">
+                <label for="checkbox_AddRuss"> Ruß</label>
+
+                <input type="checkbox" id="checkbox_AddSG3" name="checkbox_AddSG3" onClick="showVariableInputBox('SG3')">
+                <label for="checkbox_AddSG3"> SG3</label>
+
+                <!---------------------->
+                <!-- VARIABLE : WATER -->
+                <!---------------------->
+                <!--Volume variable is only available when the 'add water' checkbox is ticked-->
+                <p id="form_water" style="display:none">
+                    <label class="ProcessVariables">&emsp;&emsp;&emsp;&emsp;&emsp;Distilled Water</label>
+                    <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                        <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                    </a>
+                    <input class ="ProcessInput"type="number" id="Water" >
+                    <label class="ProcessInputUnit" >Litre</label><br>
+                </p>
+
+                <!-------------------->
+                <!-- VARIABLE : SBR -->
+                <!-------------------->
+                <!--Volume variable is only available when the 'add water' checkbox is ticked-->
+                <p id="form_SBR" style="display:none">
+                  <label class="ProcessVariables" >&emsp;&emsp;&emsp;&emsp;&emsp;SBR</label>
+                  <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                      <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                  </a>
+                  <input class ="ProcessInput"type="number" id="SBR" >
+                  <label class="ProcessInputUnit" >grams</label>
+                </p>
+
+                <!------------------------->
+                <!-- VARIABLE : GRAPHITE -->
+                <!------------------------->
+                <!--Volume variable is only available when the 'add water' checkbox is ticked-->
+                <p id="form_Grapite" style="display:none">
+                  <label class="ProcessVariables" >&emsp;&emsp;&emsp;&emsp;&emsp;Graphite</label>
+                  <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                      <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                  </a>
+                  <input class ="ProcessInput"type="number" id="Graphite" >
+                  <label class="ProcessInputUnit" >grams</label>
+                </p>
+
+                <!-------------------->
+                <!-- VARIABLE : CMC -->
+                <!-------------------->
+                <!--Volume variable is only available when the 'add water' checkbox is ticked-->
+                <p id="form_CMC" style="display:none">
+                  <label class="ProcessVariables" >&emsp;&emsp;&emsp;&emsp;&emsp;CMC</label>
+                  <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                      <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                  </a>
+                  <input class ="ProcessInput"type="nzmber" id="CMC" >
+                  <label class="ProcessInputUnit" >grams</label>
+                </p>
+
+                <!-------------------->
+                <!-- VARIABLE : RUß -->
+                <!-------------------->
+                <!--Volume variable is only available when the 'add water' checkbox is ticked-->
+                <p id="form_Russ" style="display:none">
+                  <label class="ProcessVariables" >&emsp;&emsp;&emsp;&emsp;&emsp;Ruß</label>
+                  <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                      <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                  </a>
+                  <input class ="ProcessInput"type="number" id="Russ" >
+                  <label class="ProcessInputUnit" >grams</label>
+                </p>
+
+                <!-------------------->
+                <!-- VARIABLE : SG3 -->
+                <!-------------------->
+                <!--Volume variable is only available when the 'add water' checkbox is ticked-->
+                <p id="form_SG3" style="display:none">
+                  <label class="ProcessVariables" >&emsp;&emsp;&emsp;&emsp;&emsp;SG3</label>
+                  <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                      <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                  </a>
+                  <input class ="ProcessInput"type="number" id="SG3" >
+                  <label class="ProcessInputUnit" >grams</label>
+                </p>
+
+                <br><br><br>
+
+                <!-------------------------->
+                <!-- VARIABLE : VISCOSITY -->
+                <!-------------------------->
+                <img class="img_VariableIcon" src="Images\Mixing\viscosity_icon.png" alt="Viscosity icon">
+                <label class="ProcessVariables">&emsp;Viscosity</label>
+                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                    <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                </a> 
+                <input class ="ProcessInput"type="number" id="Viscosity">
+                <label class="ProcessInputUnit">Ns/m<sup>2</sup></label><br><br><br>
+
+                <!------------------------------------------------>
+                <!-- VARIABLE : PARTICLE SIZE (ACTIVE MATERIAL) -->
+                <!------------------------------------------------>
+                <img class="img_VariableIcon" src="Images\Mixing\particle_size_active_material_icon.png" alt="Viscosity icon">
+                <label class="ProcessVariables">&emsp;Particle size (active material)</label>
+                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                    <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                </a> 
+                <input class ="ProcessInput"type="number" id="Particle_size_active_material">
+                <label class="ProcessInputUnit">μm</label><br><br><br>
+
+                <!-------------------------------->
+                <!-- VARIABLE : SLURRY (SLURRY) -->
+                <!-------------------------------->
+                <img class="img_VariableIcon" src="Images\Mixing\particle_size_slurry_icon.png" alt="Viscosity icon">
+                <label class="ProcessVariables">&emsp;Particle size (slurry)</label>
+                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                    <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                </a> 
+                <input class ="ProcessInput"type="number" id="Particle_size_slurry">
+                <label class="ProcessInputUnit">μm</label><br><br><br>
+
+                <button class="button_2" id="button_Write" disabled >Write to InfluxDB</button>
+                <label id="button_Write_hint">&emsp;Please start the mixing process before you add the variables</label>
+              </div>
+          </div>                    
+        </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                             MIXING SEQUENCE TAB                                                                          -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->                
+        <div id="MixingSequence" class="div_TabContent">
+          <table id="Table"> 
+              <tr> 
+                  <th>Mixing Sequence</th>
+                  <th>Timestamp<br>[hh:mm:ss]</th>
+                  <th>Materials</th>
+                  <th>Weight<br>[grams]</th>
+                  <th>Viscosity<br>[Ns/m<sup>2</sup>]</th>
+                  <th>Particle Size [μm]<br>(Active Material)</th>
+                  <th>Particle Size [μm]<br>(Slurry)</th>
+                  <th>&emsp;&emsp;&emsp;</th> 
+              </tr>
+          </table> <br>
+          
+            <button class="button_1" onclick="downlaodCSV('Mixing')" id="button_csv" style="margin-left: 85%; ;">Download CSV</button>
+
+            <!-- Done button -->
+            <button class="button_2" onclick="doneProcess('Mixing')" id="button_Done" disabled>Mixing Done</button>
+            <label id="button_Done_hint">&emsp;Add at least one mixing sequence to end the mixing process</label>
+            <br><br>
+            </div>
+
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                  LOG TAB                                                                                 -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->              
+        <div id="Log" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
+          <fieldset id="log_area">
+            <legend>Log</legend>
+            <textarea
+              id="log"
+              style="width: 100%"
+              rows="25"
+            ></textarea>
+            <button onclick="document.getElementById('log').value=''">Clear Log</button>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
