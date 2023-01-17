@@ -1,209 +1,287 @@
-<!DOCTYPE html>
 <html>
-    <head>
-        <title>Vacuum Drying</title>
+  <head>
+    <title>Slitting</title>
 
-        <!--Connect the css file and the js file-->
-        <link rel="stylesheet" type="text/css" href="VacuumDrying_style.css">
-        <script type="text/javascript" src="VacuumDrying.js"></script>
-    </head>
+    <!--Connect the css file and the js file-->
+    <link rel="stylesheet" type="text/css" href="General_style.css">
+    <link rel="stylesheet" type="text/css" href="Slitting_style.css">
+    <script type="text/javascript" src="Slitting.js"></script>
+    <script type="text/javascript" src="General_functions.js"></script>
 
-    <!--On load of the page, open the 'defaultOpen tab'-->
-    <body onload="document.getElementById('defaultOpen').click();"> 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-        <header>
-            <div class="Navigation_Bar Navigation_Link">
-                <img class="CELLFAB_Logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
-                <a href="DataAccess.html">DATA ACCESS</a>
-                <a href="DataInput.html">DATA INPUT</a>
-                <a>DEUTSCH</a>
+    <script type="module">
+      // import latest release from npm repository 
+      import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
+      import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
+      import './env_browser.js'
+      const {url, token, org, bucket, username, password} = window.INFLUX_ENV
+      const influxDB = new InfluxDB({url, token})
+
+      var SlittingSequence = 0;
+      
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      /*                                                                WRITE FUNCTIONS                                                                             */
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      // log results to HTML page
+      const logField = document.getElementById('log');
+      function log(message, ...rest){
+        console.log(arguments[0],rest)
+        const previousValue = logField.value
+        logField.value += (previousValue?'\n':'')+Array.prototype.slice.call(arguments).join('\n')
+        // scroll to bottom with latest results
+        logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
+      }
+
+      // write data into influx db
+      function writeInflux(variable,value) {
+        const writeApi = influxDB.getWriteApi(org, bucket)
+        const point1 = new Point('CELLFAB-Measurement')
+          .floatField(variable, value)
+
+        writeApi.writePoint(point1)
+        log("    "+ variable + " = " + value)
+
+        // flush pending writes and close writeApi
+        writeApi
+          .close()
+          .catch(e => {
+            log('WRITE FAILED', e)
+          })
+      }
+
+      //write data into Coating Steps Table
+      function writeSlittingSequence(ElectrodeSectionLength) { 
+        // initialise table
+        var table = document.getElementById("Table");  
+        var row = table.insertRow(); 
+
+        // add cell to the table
+        var slitting_sequence = row.insertCell(0);
+        var timestamp = row.insertCell(1);
+        var electrode_section_length = row.insertCell(2);
+        var remove_button_cell = row.insertCell(3);
+
+        // add remove button
+        var remove_button = document.createElement('input'); 
+        remove_button.setAttribute('type', 'button');
+        remove_button.setAttribute('value', 'Remove');
+        remove_button.setAttribute('onclick', 'removeRow(this)');
+
+        // query and initialize calendering_step & timestamp
+        slitting_sequence.innerHTML = SlittingSequence;
+
+        var time = new Date();
+        var Timestamp = (String(time.getDate()).padStart(2,'0') + "-" + String(time.getMonth()).padStart(2,'0') + "-" + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
+        timestamp.innerHTML = (Timestamp); // initialize timestamp
+        
+        // initialize table cell
+        electrode_section_length.innerHTML = ElectrodeSectionLength;
+        remove_button_cell.innerHTML = "<br><button type='button' onclick='removeRow(this)' >Remove </button><br>"; 
+
+        // reset input field
+        var reset_inputs = ['ElectrodeSectionLength']
+        for (let i = 0; i < reset_inputs.length; i++){
+          var temp = reset_inputs[i];
+          document.getElementById(temp).value = null;
+        }
+
+        // After starting the slitting process, go to the Variables tab
+        if (SlittingSequence == 0){
+          document.getElementById('tab_Variables').click();
+        }
+
+        // After adding the variables, go to the Slitting Sequence table tab
+        else{
+          alert("Slitting step added");
+          document.getElementById('tab_SlittingSequence').click();
+        }
+      }
+      
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      /*                                                           INITIALIZE PAGE CONTROLS                                                                         */
+      /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
+      
+      // Button to start the calendering process
+      const button_StartSlittingProcess = document.getElementById('button_StartSlittingProcess')
+      button_StartSlittingProcess.addEventListener('click', () => {
+        log('\n**SLITTING STARTED**')
+        writeInflux('MT_140_slitting_sequence',SlittingSequence); // Update the Slitting Sequence to 0 to indicate the starting of the slitting process
+        writeSlittingSequence("-", "-", "-", "-","-" ) // Update the Slitting Sequence tab to indictae the starting of the slitting process
+        document.getElementById("button_StartSlittingProcess").disabled = true; // Disable the button so the user cannot start the process twice unless the process has ended
+        document.getElementById("button_StartSlittingProcess").innerHTML="Slitting Started"; // Change button display text to indicate that the process has started
+        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        document.getElementById("button_Write_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
+      })
+
+      // Button to write the variables into InfluxDB
+      const button_Write = document.getElementById('button_Write');
+      button_Write.addEventListener('click', () => {
+        log('\n**NEW SLITTING STEP ADDED**')
+
+        // Update the SlittingSequence and write it into InfluxDB
+        SlittingSequence = SlittingSequence + 1; 
+        writeInflux('MT_140_slitting_sequence',SlittingSequence);
+
+        // Define variables 
+        var variable_input_id = ['ElectrodeSectionLength'] // html id of the variables
+        var variable_input_influx_id = ['CM_210_ridge_height-mmElec'] // Influx id of the variables
+        var Variable_values = [] // Empty matrix to store the variable values
+
+        // write the values of the variables into InfluxDB
+        for (let i=0; i < variable_input_id.length; i++){
+          const temp = document.getElementById(variable_input_id[i]);
+          const variable_input_value = Number(temp.value);
+          writeInflux(variable_input_influx_id[i],variable_input_value);
+          Variable_values[i] = variable_input_value;
+        }
+        
+        writeSlittingSequence(Variable_values[0],Variable_values[1]); // update the Slitting Sequence tab
+        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        document.getElementById("button_Done_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
+      })
+    </script>
+  </head>
+
+  <!--On load of the page, open the 'defaultOpen tab'-->
+  <body onload="document.getElementById('defaultOpen').click();"> 
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--                                                           LOGO, LANGUAGE, NAVIGATION BAR                                                                 -->
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <header>
+      <div class="Navigation_Bar Navigation_Link">
+          <img class="CELLFAB_Logo" src="Images\DataAccess\CELLFAB_logo.png" alt="CELLFAB_logo" >
+          <a href="DataAccess.html">DATA ACCESS</a>
+          <a href="DataInput.html">DATA INPUT</a>
+          <a>DEUTSCH</a>
+      </div>
+    </header>
+
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <!--                                                                   TITLE, MAIN CONTAINER                                                              -->
+    <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+    <h1 class="Page_Title">Slitting</h1>          
+
+    <div class="div_MainContainer">
+        
+        <!--Process flow chain showing current position of the process-->
+        <div class="div_ProcessFlow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
+            <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
+            <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
+            <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
+        </div>
+        
+        <div style=" display: flex; justify-content: space-between;">
+            <h4>Batch ID: </h4>    <!-- TODO: Read batch ID from server-->
+
+            <div>
+                <!--CELLFAB OneNote Button-->
+                <a class="button_1" href="https://onedrive.live.com/redir?resid=154068B5BA211242%211807&authkey=%21AjK8kQtUBmG5oH4&page=View&wd=target%28Fertigungsprotokolle%20Q2%2022.one%7C1d1bc475-5c48-4db1-ae5c-ce649b07c107%2FZeitraum%7C86baeb91-fc20-4fc0-8944-21db69c010e6%2F%29" target="_blank">CELLFAB OneNote</a> 
             </div>
-        </header>
+        </div>
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                                   TITLE, MAIN CONTAINER                                                              -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-        <h1 class="Page_Title">Vacuum Drying</h1>          
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                    TABS                                                                                  -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
-        <div class="div_MainContainer">
-            
-            <!--Process flow chain showing current position of the process-->
-            <div class="div_ProcessFlow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\1_E_InputMaterials.png" alt="Input Materials logo">                           
-                <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\2_E_MixingDispersing.png" alt="Mixing and Dispersing logo">                          
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\3_E_Coating.png" alt="Coating logo">                          
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\4_E_Drying.png" alt="Drying logo">                           
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
-                <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
-                <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
-                <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
-            </div>
-            
-            <div style=" display: flex; justify-content: space-between;">
-                <h4>Batch ID: </h4>    <!-- TODO: Read batch ID from server-->
+        <div class="div_Tab">
+          <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
+          <button class="button_TabLinks" onclick="openTab(event, 'Variables')" id = tab_Variables>Variables</button>
+          <button class="button_TabLinks" onclick="openTab(event, 'SlittingSequence')" id = "tab_SlittingSequence">Slitting Sequence</button> 
+          <button class="button_TabLinks" onclick="openTab(event, 'Log')" id = "tab_Log">Log</button>                
+        </div>
 
-                <div>
-                    <a class="button_1" href="https://onedrive.live.com/redir?resid=154068B5BA211242%211807&authkey=%21AjK8kQtUBmG5oH4&page=View&wd=target%28Fertigungsprotokolle%20Q2%2022.one%7C1d1bc475-5c48-4db1-ae5c-ce649b07c107%2FZeitraum%7C86baeb91-fc20-4fc0-8944-21db69c010e6%2F%29">CELLFAB OneNote</a> 
-                </div>
-            </div>
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                  MANUAL TAB                                                                              -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                                    TABS                                                                                  -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <div id="Manual" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
+          <br>
+          After calendaring, or sometimes before, electrodes are slit and dried before they are transferred into the dry room. <br><br>
+          
+          Slitting is separation process in which a wide electrode coil is divided into several smaller electrode coils. <br><br>
 
-            <div class="div_Tab">
-                <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
-                <button class="button_TabLinks" onclick="openTab(event, 'Variables')">Variables</button>
-                <button class="button_TabLinks" onclick="openTab(event, 'TableTab')" id = "Table_tab">Vacuum Drying Steps</button>                 
-            </div>
+          &bull; The button "CELLFAB OneNote" directs you to the OneNote Notebook of the process for more information. <br><br>
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                                  MANUAL TAB                                                                              -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+          &bull; Start the slitting process by pressing the "Start Slitting" button at bottom left.  <br><br>
+        
+          <button class="button_2" id="button_StartSlittingProcess">Start Slitting Process</button>
+        </div>
 
-            <div id="Manual" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
-                <br>
-                Vacuum Drying Manual
-            </div>
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                 VARIABLEs TAB                                                                            -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                                ADD VARIABLE TAB                                                                          -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
+        <div id="Variables" class="div_TabContent">
+          <h3>Please enter the value for each variables of the slitting process. Then, press 'Write to InfluxDB' button</h3> 
 
-            <div id="Variables" class="div_TabContent">
-                <h3>Please enter the variables and press the 'Add Variable' button</h3> 
+          <div class="div_AddVariable">
+              <div class="div_AddVariableLeft"> 
 
-                <div class="div_AddVariable">
-                    <div class="div_AddVariableLeft">
+                <!----------------------------------------->
+                <!-- VARIABLE : ELECTRODE SECTION LENGTH -->
+                <!----------------------------------------->
+                <img class="img_VariableIcon" src="Images\Slitting\electrode_section_length_icon.png" alt="Electrode Section Length icon">
+                <label class="ProcessVariables">&emsp;Electrode Section Length</label>
+                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                    <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
+                </a> 
+                <input class ="ProcessInput"type="number" id="ElectrodeSectionLength">
+                <label class="ProcessInputUnit">mm</label><br><br><br>
 
-                        <!----------------------------------->
-                        <!-- VARIABLE : DRYING TEMPERATURE -->
-                        <!----------------------------------->
-                        <img class="img_VariableIcon" src="Images\VacuumDrying\dryingtemp_icon.png" alt="DryingTemperature icon">
-                        <label class="ProcessVariables">&emsp;Drying Temperature</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a> 
-                        <input class ="ProcessInput" id="DryingTemperature" type="number" name="DryingTemperature">
-                        <label class="ProcessInputUnit">°C</label><br><br><br><br>
+                <button class="button_2" id="button_Write" disabled >Write to InfluxDB</button>
+                <label id="button_Write_hint">&emsp;Please start the slitting process before you add the variables</label>
+              </div>
+          </div>                    
+        </div>
 
-                        <!-------------------------------->
-                        <!-- VARIABLE : DRYING DURATION -->
-                        <!-------------------------------->
-                        <img class="img_VariableIcon" src="Images\VacuumDrying\dryingduration_icon.png" alt="DryingDuration icon">
-                        <label class="ProcessVariables">&emsp;Drying Duration</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a>  
-                        <input class ="ProcessInput"id="DryingDuration" type="number" name="DryingDuration">
-                        <label class="ProcessInputUnit">minutes</label><br><br><br><br>
+        <!------------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                             CALENDERING SEQUENCE TAB                                                                          -->
+        <!------------------------------------------------------------------------------------------------------------------------------------------------------------------->                
+        <div id="SlittingSequence" class="div_TabContent">
+          <table id="Table"> 
+              <tr> 
+                  <th>Slitting Sequence</th>
+                  <th>Timestamp<br>[hh:mm:ss]</th>
+                  <th>Electrode Section Length<br>[mm]</th>
+                  <th>&emsp;&emsp;&emsp;</th> 
+              </tr>
+          </table> <br>
+          
+            <button class="button_1" onclick="downlaodCSV('Slitting')" id="button_csv" style="margin-left: 85%; ;">Download CSV</button>
 
-                        <!-------------------------------->
-                        <!-- VARIABLE : PRESSURE VACUUM -->
-                        <!-------------------------------->
-                        <img class="img_VariableIcon" src="Images\VacuumDrying\pressurevacuum_icon.png" alt="PressureVacuum icon">
-                        <label class="ProcessVariables">&emsp;Pressure Vacuum</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a>   
-                        <input class ="ProcessInput" id="PressureVacuum" type="number" name="PressureVacuum">
-                        <label class="ProcessInputUnit">bar</label><br><br><br><br>
-
-                        <!---------------------------------->
-                        <!-- VARIABLE : RESIDUAL MOISTURE -->
-                        <!---------------------------------->
-                        <img class="img_VariableIcon" src="Images\VacuumDrying\residualmoisture_icon.png" alt="ResidualMoisture icon">
-                        <label class="ProcessVariables">&emsp;Residual Moisture</label>
-                        <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                            <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                        </a>   
-                        <input class ="ProcessInput" id="ResidualMoisture" type="number" name="ResidualMoisture">
-                        <label class="ProcessInputUnit">%</label><br><br><br><br>
-
-                        <!-------------------------------------->
-                        <!-- VARIABLE : ADD VARIABLE TEMPLATE -->
-                        <!-------------------------------------->
-                        <!--
-                            <img class="img_VariableIcon" src="Images\VacuumDrying\**NAME_OF_VARIABLE_ICON**" alt="**NAME_OF_VARIABLE** icon">
-                            <a class="ProcessVariables" href="**ONE_NOTE_PAGE_ADDRESS**">&emsp;**NAME_OF_VARIABLE**</a>  
-                            <input class ="ProcessInput" id="**NAME_OF_VARIABLE_NO_SPACE**" type="number" name="**NAME_OF_VARIABLE_NO_SPACE**">
-                            <label class="ProcessInputUnit">**VARIABLE_UNIT**</label><br><br><br><br>
-                        -->
-
-                        <!--------------------------->
-                        <!-- BUTTON : ADD VARIABLE -->
-                        <!--------------------------->
-                        <button class="button_2" onclick="addVariable(
-                            document.getElementById('DryingTemperature').value, 
-                            document.getElementById('DryingDuration').value,
-                            document.getElementById('PressureVacuum').value,
-                            document.getElementById('ResidualMoisture').value
-                            /*------------------------------------
-                            --- BUTTON : ADD VARIABLE TEMPLATE ---
-                            --------------------------------------
-                            ,document.getElementById('**NAME_OF_VARIABLE_NO_SPACE**').value */
-                            )">
-                            
-                            <span>Add Variable</span>
-                        </button> <br><br>
-                    </div>
-                    
-                    <!----------------------------------->
-                    <!-- MATERIAL & INSTRUMENT SUBTABS -->
-                    <!----------------------------------->
-                    <div class="div_AddVariableRight">
-                        <div class="div_SubTab">
-                            <button class="button_SubTabLinks" onclick="openSubTab(event, 'Material')" >Material</button>
-                            <button class="button_SubTabLinks" onclick="openSubTab(event, 'Instruments')" >Instruments</button> 
-                        </div>
-
-                        <div id="Material" class="div_SubTabContent">
-                            this is tab for materials
-                        </div>
-    
-                        <div id="Instruments" class="div_SubTabContent">
-                            this is tab for instruments
-                        </div>
-                    </div>
-                </div>                    
+            <!-- Done button -->
+            <button class="button_2" onclick="doneProcess('Slitting')" id="button_Done" disabled>Slitting Done</button>
+            <label id="button_Done_hint">&emsp;Add at least one slitting sequence to end the slitting process</label>
+            <br><br>
             </div>
 
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------->
-<!--                                                             TABLE TAB                                                                              -->
-<!-------------------------------------------------------------------------------------------------------------------------------------------------------->                
-            <div id="TableTab" class="div_TabContent">
-                <table id="Table"> 
-                    <tr> 
-                        <th>Drying Temperature</th>
-                        <th>Drying Duration</th>
-                        <th>Pressure Vacuum</th>
-                        <th>Residual Moisture</th>
-                        <!------------------------------->
-                        <!-- ADD TABLE COLUMN TEMPLATE -->
-                        <!------------------------------->
-                        <!--
-                            <th>**NAME_OF_VARIABLE** **VARIABLE_UNIT**</th>
-                        -->
-                        <th>&emsp;&emsp;&emsp;</th> 
-                    </tr> <tr></tr>
-                </table> <br><br><br>
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
+        <!--                                                                  LOG TAB                                                                                 -->
+        <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->              
+        <div id="Log" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
+          <fieldset id="log_area">
+            <legend>Log</legend>
+            <textarea
+              id="log"
+              style="width: 100%"
+              rows="25"
+            ></textarea>
+            <button onclick="document.getElementById('log').value=''">Clear Log</button>
+          </fieldset>
+        </div>
 
-                <div id="counterDiv" style="display:none"> <input id="counter" type="number" value="0" readonly></div>
-
-                <!-- Done button -->
-                <button class="button_2" onclick="doneProcess()">
-                    <span>Vacuum Drying Done</span>
-                </button> <br><br>
-            </div>
-        </div>         
-    </body>
+      </div>
+    </div>
+  </body>
 </html>
