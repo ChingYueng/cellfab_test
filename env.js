@@ -12,6 +12,17 @@ const username = process.env['INFLUX_USERNAME'] || '--'
 /**InfluxDB password  */
 const password = process.env['INFLUX_PASSWORD'] || '--'
 
+/** OPCUA */
+
+const opcua_url = process.env['OPCUA_URL'] || 'opc.tcp://127.0.0.1:49320'
+
+const opcua_username = process.env['OPCUA_USERNAME'] || 'opcua'
+
+const opcua_password = process.env['OPCUA_USERNAME'] || 'changemechangeme'
+
+const opcua_prefix = "ns=2;s=ManualProcessData.CELLFAB-PT."
+
+
 module.exports = {
   url,
   token,
@@ -19,4 +30,8 @@ module.exports = {
   bucket,
   username,
   password,
+  opcua_url,
+  opcua_username,
+  opcua_password,
+  opcua_prefix
 }

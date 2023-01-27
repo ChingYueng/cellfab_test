@@ -9,12 +9,7 @@
     <script type="text/javascript" src="General_functions.js"></script>
 
     <script type="module">
-      // import latest release from npm repository 
-      import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
-      import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
       import './env_browser.js'
-      const {url, token, org, bucket, username, password} = window.INFLUX_ENV
-      const influxDB = new InfluxDB({url, token})
 
       var CoatingDryingSequence = 0;
       
@@ -23,6 +18,7 @@
       /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
       // log results to HTML page
       const logField = document.getElementById('log');
+
       function log(message, ...rest){
         console.log(arguments[0],rest)
         const previousValue = logField.value
@@ -31,25 +27,18 @@
         logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
       }
 
-      // write data into influx db
-      function writeInflux(variable,value) {
-        const writeApi = influxDB.getWriteApi(org, bucket)
-        const point1 = new Point('CELLFAB-Measurement')
-          .floatField(variable, value)
-
-        writeApi.writePoint(point1)
-        log("    "+ variable + " = " + value)
-
-        // flush pending writes and close writeApi
-        writeApi
-          .close()
-          .catch(e => {
-            log('WRITE FAILED', e)
-          })
+      // write  data with OPC-UA
+      function writeOPC(variable, value) {
+        const endpoint = "/api/node/" + variable;
+          fetch(endpoint, {
+              method: "POST",
+              body: JSON.stringify({ "value": value }),
+              headers: { "Content-Type": "application/json" }
+          });
       }
 
-      //write data into Coating Steps Table
-      function writeCoatingDryingSequence(CoatingNozzleDistance, CoatingThickness) { 
+      //write data into UI Table (in tab Table)
+      function writeTable(CoatingNozzleDistance, CoatingThickness) { 
         // initialise table
         var table = document.getElementById("Table");  
         var row = table.insertRow(); 
@@ -67,8 +56,8 @@
         remove_button.setAttribute('value', 'Remove');
         remove_button.setAttribute('onclick', 'removeRow(this)');
 
+        // query and initialize mixing_step & timestamp
         coatingdrying_sequence.innerHTML = CoatingDryingSequence;
-
         var time = new Date();
         var Timestamp = (String(time.getDate()).padStart(2,'0') + "-" + String(time.getMonth()).padStart(2,'0') + "-" + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
         timestamp.innerHTML = (Timestamp); // initialize timestamp
@@ -85,15 +74,15 @@
           document.getElementById(temp).value = null;
         }
 
-        // After starting the coating drying process, go to the Variables tab
+        // Change to Variables tab after starting the coating drying process
         if (CoatingDryingSequence == 0){
           document.getElementById('tab_Variables').click();
         }
 
-        // After adding the variables, go to the Coating Drying Sequence table tab
+        // Change to Table tab after adding the coating drying step
         else{
           alert("Coating and Drying step added");
-          document.getElementById('tab_CoatingDryingSequence').click();
+          document.getElementById('tab_SequenceTable').click();
         }
       }
       
@@ -105,11 +94,11 @@
       const button_StartCoatingDryingProcess = document.getElementById('button_StartCoatingDryingProcess')
       button_StartCoatingDryingProcess.addEventListener('click', () => {
         log('\n**COATING & DRYING STARTED**')
-        writeInflux('MT_120_coatingdrying_sequence',CoatingDryingSequence); // Update the Coating Drying Sequence to 0 to indicate the starting of the coating and drying process
-        writeCoatingDryingSequence("-", "-", "-", "-","-" ) // Update the Coating Drying Sequence tab to indictae the starting of the coating and drying process
+        writeOPC('MT_120_coatingdrying_sequence',CoatingDryingSequence); // Update the Coating Drying Sequence to 0 to indicate the starting of the coating and drying process
+        writeTable("-", "-", "-", "-","-" ) // Update the Coating Drying Sequence tab to indicate the starting of the coating and drying process
         document.getElementById("button_StartCoatingDryingProcess").disabled = true; // Disable the button so the user cannot start the process twice unless the process has ended
         document.getElementById("button_StartCoatingDryingProcess").innerHTML="Coating and Drying Started"; // Change button display text to indicate that the process has started
-        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Submit Data" button in the Variables tab
         document.getElementById("button_Write_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
       })
 
@@ -118,25 +107,25 @@
       button_Write.addEventListener('click', () => {
         log('\n**NEW COATING & DRYING STEP ADDED**')
 
-        // Update the CoatingDryingSequence and write it into InfluxDB
+        // Update the CoatingDryingSequence and write it into Database
         CoatingDryingSequence = CoatingDryingSequence + 1; 
-        writeInflux('MT_120_coatingdrying_sequence',CoatingDryingSequence);
+        writeOPC('MT_120_coatingdrying_sequence',CoatingDryingSequence);
 
         // Define variables 
         var variable_input_id = ['CoatingNozzleDistance','CoatingThickness'] // html id of the variables
-        var variable_input_influx_id = ['MS_121_slot_nozzle_anode-mm', 'CM_130_coating_thickness_anode-mm'] // Influx id of the variables
+        var variable_input_opcua_id = ['MS_121_slot_nozzle_anode-mm', 'CM_130_coating_thickness_anode-mm'] // Influx id of the variables
         var Variable_values = [] // Empty matrix to store the variable values
 
-        // write the values of the variables into InfluxDB
+        // write the values of the variables into OPC-UA
         for (let i=0; i < variable_input_id.length; i++){
           const temp = document.getElementById(variable_input_id[i]);
           const variable_input_value = Number(temp.value);
-          writeInflux(variable_input_influx_id[i],variable_input_value);
+          writeOPC(variable_input_opcua_id[i],variable_input_value);
           Variable_values[i] = variable_input_value;
         }
         
-        writeCoatingDryingSequence(Variable_values[0],Variable_values[1]); // update the Coating Drying Sequence tab
-        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        writeTable(Variable_values[0],Variable_values[1]); // update the Coating Drying Sequence tab
+        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Submit Data" button in the Variables tab
         document.getElementById("button_Done_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
       })
     </script>
@@ -198,7 +187,7 @@
         <div class="div_Tab">
           <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
           <button class="button_TabLinks" onclick="openTab(event, 'Variables')" id = tab_Variables>Variables</button>
-          <button class="button_TabLinks" onclick="openTab(event, 'CoatingDryingSequence')" id = "tab_CoatingDryingSequence">Coating & Drying Sequence</button> 
+          <button class="button_TabLinks" onclick="openTab(event, 'SequenceTable')" id = "tab_SequenceTable">Table</button> 
           <button class="button_TabLinks" onclick="openTab(event, 'Log')" id = "tab_Log">Log</button>                
         </div>
 
@@ -250,7 +239,7 @@
                 <input class ="ProcessInput"type="number" id="CoatingThickness">
                 <label class="ProcessInputUnit">mm</label><br><br><br>
 
-                <button class="button_2" id="button_Write" disabled >Write to InfluxDB</button>
+                <button class="button_2" id="button_Write" disabled >Submit Data</button>
                 <label id="button_Write_hint">&emsp;Please start the coating & drying process before you add the variables</label>
               </div>
           </div>                    
@@ -259,7 +248,7 @@
         <!---------------------------------------------------------------------------------------------------------------------------------------------------------------------->
         <!--                                                             COATING DRYING SEQUENCE TAB                                                                          -->
         <!---------------------------------------------------------------------------------------------------------------------------------------------------------------------->                
-        <div id="CoatingDryingSequence" class="div_TabContent">
+        <div id="SequenceTable" class="div_TabContent">
           <table id="Table"> 
               <tr> 
                   <th>Coating & Drying Sequence</th>
