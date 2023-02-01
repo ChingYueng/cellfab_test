@@ -1,0 +1,13 @@
+﻿Tag Name,Address,Data Type,Respect Data Type,Client Access,Scan Rate,Scaling,Raw Low,Raw High,Scaled Low,Scaled High,Scaled Data Type,Clamp Low,Clamp High,Eng Units,Description,Negate Value
+"CM_111_viscosity_cathode-mPas","K0007",Double,1,R/W,100,,,,,,,,,,"",
+"CM_113_particle_size_active_material-micrometer","K0008",Double,1,R/W,100,,,,,,,,,,"",
+"CM_113_particle_size_slurry-micrometer","K0009",Double,1,R/W,100,,,,,,,,,,"",
+"CM_130_coating_thickness_anode-mm","K0011",Double,1,R/W,100,,,,,,,,,,"",
+"MS_112_material_weight_active_material-grams","K0003",Double,1,R/W,100,,,,,,,,,,"",
+"MS_112_material_weight_additive-grams","K0004",Double,1,R/W,100,,,,,,,,,,"",
+"MS_112_material_weight_binder-grams","K0005",Double,1,R/W,100,,,,,,,,,,"",
+"MS_112_material_weight_carbon_black-grams","K0006",Double,1,R/W,100,,,,,,,,,,"",
+"MS_112_material_weight_solvent-grams","K0002",Double,1,R/W,100,,,,,,,,,,"",
+"MS_121_slot_nozzle_anode-mm","K0010",Double,1,R/W,100,,,,,,,,,,"",
+"MT_110_mixing_sequence","K0001",Long,1,R/W,100,,,,,,,,,,"",
+"MT_120_coatingdrying_sequence","K0012",Long,1,R/W,100,,,,,,,,,,"",
