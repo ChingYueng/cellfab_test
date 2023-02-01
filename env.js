@@ -18,7 +18,7 @@ const opcua_url = process.env['OPCUA_URL'] || 'opc.tcp://127.0.0.1:49320'
 
 const opcua_username = process.env['OPCUA_USERNAME'] || 'opcua'
 
-const opcua_password = process.env['OPCUA_USERNAME'] || 'changemechangeme'
+const opcua_password = process.env['OPCUA_PASSWORD'] || 'changemechangeme'
 
 const opcua_prefix = "ns=2;s=ManualProcessData.CELLFAB-PT."
 
