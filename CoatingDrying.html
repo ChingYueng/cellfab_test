@@ -37,7 +37,7 @@
           });
       }
 
-      //write data into UI Table (in tab Table)
+      // write data into UI Table (in tab Table)
       function writeTable(CoatingNozzleDistance, CoatingThickness) { 
         // initialise table
         var table = document.getElementById("Table");  
@@ -56,7 +56,7 @@
         remove_button.setAttribute('value', 'Remove');
         remove_button.setAttribute('onclick', 'removeRow(this)');
 
-        // query and initialize mixing_step & timestamp
+        // query and initialize coatingdrying_sequence & timestamp
         coatingdrying_sequence.innerHTML = CoatingDryingSequence;
         var time = new Date();
         var Timestamp = (String(time.getDate()).padStart(2,'0') + "-" + String(time.getMonth()).padStart(2,'0') + "-" + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
@@ -102,7 +102,7 @@
         document.getElementById("button_Write_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
       })
 
-      // Button to write the variables into InfluxDB
+      // Button to write the variables into OPC-UA
       const button_Write = document.getElementById('button_Write');
       button_Write.addEventListener('click', () => {
         log('\n**NEW COATING & DRYING STEP ADDED**')
@@ -113,7 +113,7 @@
 
         // Define variables 
         var variable_input_id = ['CoatingNozzleDistance','CoatingThickness'] // html id of the variables
-        var variable_input_opcua_id = ['MS_121_slot_nozzle_anode-mm', 'CM_130_coating_thickness_anode-mm'] // Influx id of the variables
+        var variable_input_opcua_id = ['MS_121_slot_nozzle_anode-mm', 'CM_130_coating_thickness_anode-mm'] // OPC-UA id of the variables
         var Variable_values = [] // Empty matrix to store the variable values
 
         // write the values of the variables into OPC-UA
@@ -212,7 +212,7 @@
         <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
 
         <div id="Variables" class="div_TabContent">
-          <h3>Please enter the value for each variables for the coating and drying process. Then, press 'Write to InfluxDB' button</h3> 
+          <h3>Please enter the value for each variables for the coating and drying process. Then, press 'Submit Data' button</h3> 
 
           <div class="div_AddVariable">
               <div class="div_AddVariableLeft"> 
@@ -222,7 +222,7 @@
                 <!---------------------------------------->
                 <img class="img_VariableIcon" src="Images\CoatingDrying\coating_nozzle_distance_icon.png" alt="Coating Nozzle Distance icon">
                 <label class="ProcessVariables">&emsp;Coating Nozzle Distance</label>
-                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                <a href="https://onedrive.live.com/redir?resid=154068B5BA211242%211807&authkey=%21AjK8kQtUBmG5oH4&page=View&wd=target%28Prozesse.one%7Ce59984fd-f763-4c55-8851-22a47181cf31%2FBeschichten%20%20B%C3%BCrkle%7Cbb5c7cf0-6893-4785-a8c0-33c6fa37bc3c%2F%29&wdorigin=NavigationUrl" target="_blank">  <!--Beschichten Bürkle-->
                     <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                 </a> 
                 <input class ="ProcessInput"type="number" id="CoatingNozzleDistance">
@@ -233,7 +233,7 @@
                 <!---------------------------------->
                 <img class="img_VariableIcon" src="Images\CoatingDrying\coating_thickness_icon.png" alt="Coating Thickness icon"> <!--TODO : Change icon-->
                 <label class="ProcessVariables">&emsp;Coating Thickness</label>
-                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                <a href="https://www.google.com" target="_blank">  <!--TODO : Change to OneNote link-->
                     <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                 </a> 
                 <input class ="ProcessInput"type="number" id="CoatingThickness">

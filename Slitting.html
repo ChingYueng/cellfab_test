@@ -9,12 +9,7 @@
     <script type="text/javascript" src="General_functions.js"></script>
 
     <script type="module">
-      // import latest release from npm repository 
-      import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
-      import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
       import './env_browser.js'
-      const {url, token, org, bucket, username, password} = window.INFLUX_ENV
-      const influxDB = new InfluxDB({url, token})
 
       var SlittingSequence = 0;
       
@@ -23,6 +18,7 @@
       /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
       // log results to HTML page
       const logField = document.getElementById('log');
+
       function log(message, ...rest){
         console.log(arguments[0],rest)
         const previousValue = logField.value
@@ -31,25 +27,18 @@
         logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
       }
 
-      // write data into influx db
-      function writeInflux(variable,value) {
-        const writeApi = influxDB.getWriteApi(org, bucket)
-        const point1 = new Point('CELLFAB-Measurement')
-          .floatField(variable, value)
-
-        writeApi.writePoint(point1)
-        log("    "+ variable + " = " + value)
-
-        // flush pending writes and close writeApi
-        writeApi
-          .close()
-          .catch(e => {
-            log('WRITE FAILED', e)
-          })
+      // write  data with OPC-UA
+      function writeOPC(variable, value) {
+        const endpoint = "/api/node/" + variable;
+          fetch(endpoint, {
+              method: "POST",
+              body: JSON.stringify({ "value": value }),
+              headers: { "Content-Type": "application/json" }
+          });
       }
 
-      //write data into Coating Steps Table
-      function writeSlittingSequence(ElectrodeSectionLength) { 
+      // write data into UI Table (in tab Table)
+      function writeTable(ElectrodeSectionLength) { 
         // initialise table
         var table = document.getElementById("Table");  
         var row = table.insertRow(); 
@@ -66,7 +55,7 @@
         remove_button.setAttribute('value', 'Remove');
         remove_button.setAttribute('onclick', 'removeRow(this)');
 
-        // query and initialize calendering_step & timestamp
+        // query and initialize slitting_sequence & timestamp
         slitting_sequence.innerHTML = SlittingSequence;
 
         var time = new Date();
@@ -92,7 +81,7 @@
         // After adding the variables, go to the Slitting Sequence table tab
         else{
           alert("Slitting step added");
-          document.getElementById('tab_SlittingSequence').click();
+          document.getElementById('tab_SequenceTable').click();
         }
       }
       
@@ -100,42 +89,42 @@
       /*                                                           INITIALIZE PAGE CONTROLS                                                                         */
       /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
       
-      // Button to start the calendering process
+      // Button to start the slitting process
       const button_StartSlittingProcess = document.getElementById('button_StartSlittingProcess')
       button_StartSlittingProcess.addEventListener('click', () => {
         log('\n**SLITTING STARTED**')
-        writeInflux('MT_140_slitting_sequence',SlittingSequence); // Update the Slitting Sequence to 0 to indicate the starting of the slitting process
-        writeSlittingSequence("-", "-", "-", "-","-" ) // Update the Slitting Sequence tab to indictae the starting of the slitting process
+        writeOPC('MT_140_slitting_sequence',SlittingSequence); // Update the Slitting Sequence to 0 to indicate the starting of the slitting process
+        writeTable("-", "-", "-", "-","-" ) // Update the Slitting Sequence tab to indictate the starting of the slitting process
         document.getElementById("button_StartSlittingProcess").disabled = true; // Disable the button so the user cannot start the process twice unless the process has ended
         document.getElementById("button_StartSlittingProcess").innerHTML="Slitting Started"; // Change button display text to indicate that the process has started
-        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Submit Data" button in the Variables tab
         document.getElementById("button_Write_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
       })
 
-      // Button to write the variables into InfluxDB
+      // Button to write the variables into OPC-UA
       const button_Write = document.getElementById('button_Write');
       button_Write.addEventListener('click', () => {
         log('\n**NEW SLITTING STEP ADDED**')
 
-        // Update the SlittingSequence and write it into InfluxDB
+        // Update the SlittingSequence and write it into OPC-UA
         SlittingSequence = SlittingSequence + 1; 
-        writeInflux('MT_140_slitting_sequence',SlittingSequence);
+        writeOPC('MT_140_slitting_sequence',SlittingSequence);
 
         // Define variables 
         var variable_input_id = ['ElectrodeSectionLength'] // html id of the variables
-        var variable_input_influx_id = ['CM_210_ridge_height-mmElec'] // Influx id of the variables
+        var variable_input_opcua_id = ['CM_210_ridge_height-mmElec'] // OPC-UA id of the variables
         var Variable_values = [] // Empty matrix to store the variable values
 
-        // write the values of the variables into InfluxDB
+        // write the values of the variables into OPC-UA
         for (let i=0; i < variable_input_id.length; i++){
           const temp = document.getElementById(variable_input_id[i]);
           const variable_input_value = Number(temp.value);
-          writeInflux(variable_input_influx_id[i],variable_input_value);
+          writeOPC(variable_input_opcua_id[i],variable_input_value);
           Variable_values[i] = variable_input_value;
         }
         
-        writeSlittingSequence(Variable_values[0],Variable_values[1]); // update the Slitting Sequence tab
-        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        writeTable(Variable_values[0],Variable_values[1]); // update the Slitting Sequence tab
+        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Submit Data" button in the Variables tab
         document.getElementById("button_Done_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
       })
     </script>
@@ -197,7 +186,7 @@
         <div class="div_Tab">
           <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
           <button class="button_TabLinks" onclick="openTab(event, 'Variables')" id = tab_Variables>Variables</button>
-          <button class="button_TabLinks" onclick="openTab(event, 'SlittingSequence')" id = "tab_SlittingSequence">Slitting Sequence</button> 
+          <button class="button_TabLinks" onclick="openTab(event, 'SequenceTable')" id = "tab_SequenceTable">Table</button> 
           <button class="button_TabLinks" onclick="openTab(event, 'Log')" id = "tab_Log">Log</button>                
         </div>
 
@@ -223,7 +212,7 @@
         <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
 
         <div id="Variables" class="div_TabContent">
-          <h3>Please enter the value for each variables of the slitting process. Then, press 'Write to InfluxDB' button</h3> 
+          <h3>Please enter the value for each variables of the slitting process. Then, press 'Submit Data' button</h3> 
 
           <div class="div_AddVariable">
               <div class="div_AddVariableLeft"> 
@@ -233,13 +222,13 @@
                 <!----------------------------------------->
                 <img class="img_VariableIcon" src="Images\Slitting\electrode_section_length_icon.png" alt="Electrode Section Length icon">
                 <label class="ProcessVariables">&emsp;Electrode Section Length</label>
-                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
+                <a href="https://www.google.com" target="_blank">  <!--TODO : Change to OneNote link-->
                     <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
                 </a> 
                 <input class ="ProcessInput"type="number" id="ElectrodeSectionLength">
                 <label class="ProcessInputUnit">mm</label><br><br><br>
 
-                <button class="button_2" id="button_Write" disabled >Write to InfluxDB</button>
+                <button class="button_2" id="button_Write" disabled >Submit Data</button>
                 <label id="button_Write_hint">&emsp;Please start the slitting process before you add the variables</label>
               </div>
           </div>                    
@@ -248,7 +237,7 @@
         <!------------------------------------------------------------------------------------------------------------------------------------------------------------------->
         <!--                                                             CALENDERING SEQUENCE TAB                                                                          -->
         <!------------------------------------------------------------------------------------------------------------------------------------------------------------------->                
-        <div id="SlittingSequence" class="div_TabContent">
+        <div id="SequenceTable" class="div_TabContent">
           <table id="Table"> 
               <tr> 
                   <th>Slitting Sequence</th>

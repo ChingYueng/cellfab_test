@@ -14,7 +14,7 @@ function openTab(evt, TabName) {
   
   function doneProcess(process) {
     if (process == "Mixing"){
-        window.location.href = 'CoatingDrying.html';  // navigate page to coating & drying
+        window.location.href = 'CoatingDrying.html';  // navigate page to Coating Drying
         document.getElementById("button_StartMixingProcess").disabled = false; // Process has ended, the user can start new mixing process if needed
         document.getElementById("button_StartMixingProcess").innerHTML="Start Mixing Process"; // Change button display text
     }
@@ -26,19 +26,25 @@ function openTab(evt, TabName) {
     }
 
     if (process =="Calendering"){
-      window.location.href = 'Slitting.html';  // navigate page to calendaring
+      window.location.href = 'Slitting.html';  // navigate page to Sliting
       document.getElementById("button_StartCalenderingProcess").disabled = false; // Process has ended, the user can start new calendering process if needed
       document.getElementById("button_StartCalenderingProcess").innerHTML="Start Calendering Process"; // Change button display text
     }
 
     if (process =="Slitting"){
-      window.location.href = 'VacuumDrying.html';  // navigate page to calendaring
+      window.location.href = 'VacuumDrying.html';  // navigate page to Vacuum Drying
       document.getElementById("button_StartSlittingProcess").disabled = false; // Process has ended, the user can start new slitting process if needed
       document.getElementById("button_StartSlittingProcess").innerHTML="Start Slitting Process"; // Change button display text
     }
+
+    if (process =="VacuumDrying"){
+      window.location.href = 'Separation.html';  // navigate page to Vacuum Drying
+      document.getElementById("button_StartVacuumDryingProcess").disabled = false; // Process has ended, the user can start new slitting process if needed
+      document.getElementById("button_StartVacuumDryingProcess").innerHTML="Start Vacuum Drying Process"; // Change button display text
+    }
     
-    document.getElementById("button_Write").disabled = true; // Disable the "Write to InfluxDB" button in the Variables tab unless the mixing process button is pressed (mixing started)
-    document.getElementById("button_Write_hint").hidden = false; // Show the hint (tells the user to start the mixing process before adding variables) in the variable tab
+    document.getElementById("button_Write").disabled = true; // Disable the "Submit Button" button in the Variables tab unless the process is started.
+    document.getElementById("button_Write_hint").hidden = false; // Show the hint (tells the user to start the process before adding variables) in the variable tab
   }
   
   function downlaodCSV(process){

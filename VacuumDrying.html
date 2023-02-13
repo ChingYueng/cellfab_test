@@ -1,28 +1,24 @@
 <html>
   <head>
-    <title>Slitting</title>
+    <title>Vacuum Drying</title>
 
     <!--Connect the css file and the js file-->
     <link rel="stylesheet" type="text/css" href="General_style.css">
-    <link rel="stylesheet" type="text/css" href="Slitting_style.css">
-    <script type="text/javascript" src="Slitting.js"></script>
+    <link rel="stylesheet" type="text/css" href="VacuumDrying_style.css">
+    <script type="text/javascript" src="VacuumDrying.js"></script>
     <script type="text/javascript" src="General_functions.js"></script>
 
     <script type="module">
-      // import latest release from npm repository 
-      import {InfluxDB,Point,} from 'https://unpkg.com/@influxdata/influxdb-client-browser/dist/index.browser.mjs'
-      import {PingAPI,SetupAPI,} from 'https://unpkg.com/@influxdata/influxdb-client-apis/dist/index.mjs'
       import './env_browser.js'
-      const {url, token, org, bucket, username, password} = window.INFLUX_ENV
-      const influxDB = new InfluxDB({url, token})
 
-      var SlittingSequence = 0;
+      var VacuumDryingSequence = 0;
       
       /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
       /*                                                                WRITE FUNCTIONS                                                                             */
       /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
       // log results to HTML page
       const logField = document.getElementById('log');
+
       function log(message, ...rest){
         console.log(arguments[0],rest)
         const previousValue = logField.value
@@ -31,34 +27,26 @@
         logField.scrollTo(0,logField.scrollHeight <= logField.offsetHeight ? 0 : logField.scrollHeight-logField.offsetHeight)
       }
 
-      // write data into influx db
-      function writeInflux(variable,value) {
-        const writeApi = influxDB.getWriteApi(org, bucket)
-        const point1 = new Point('CELLFAB-Measurement')
-          .floatField(variable, value)
-
-        writeApi.writePoint(point1)
-        log("    "+ variable + " = " + value)
-
-        // flush pending writes and close writeApi
-        writeApi
-          .close()
-          .catch(e => {
-            log('WRITE FAILED', e)
-          })
+      // write  data with OPC-UA
+      function writeOPC(variable, value) {
+        const endpoint = "/api/node/" + variable;
+          fetch(endpoint, {
+              method: "POST",
+              body: JSON.stringify({ "value": value }),
+              headers: { "Content-Type": "application/json" }
+          });
       }
 
-      //write data into Coating Steps Table
-      function writeSlittingSequence(ElectrodeSectionLength) { 
+      // write data into UI Table (in tab Table)
+      function writeTable() { 
         // initialise table
         var table = document.getElementById("Table");  
         var row = table.insertRow(); 
 
         // add cell to the table
-        var slitting_sequence = row.insertCell(0);
+        var vacuumdrying_sequence = row.insertCell(0);
         var timestamp = row.insertCell(1);
-        var electrode_section_length = row.insertCell(2);
-        var remove_button_cell = row.insertCell(3);
+        var remove_button_cell = row.insertCell(2);
 
         // add remove button
         var remove_button = document.createElement('input'); 
@@ -66,33 +54,32 @@
         remove_button.setAttribute('value', 'Remove');
         remove_button.setAttribute('onclick', 'removeRow(this)');
 
-        // query and initialize calendering_step & timestamp
-        slitting_sequence.innerHTML = SlittingSequence;
+        // query and initialize vacuumdrying_sequence & timestamp
+        vacuumdrying_sequence.innerHTML = VacuumDryingSequence;
 
         var time = new Date();
         var Timestamp = (String(time.getDate()).padStart(2,'0') + "-" + String(time.getMonth()).padStart(2,'0') + "-" + time.getFullYear() + "   " + String(time.getHours()).padStart(2,'0') + ":" + String(time.getMinutes()).padStart(2,'0') + ":" + String(time.getSeconds()).padStart(2,'0'))
         timestamp.innerHTML = (Timestamp); // initialize timestamp
         
         // initialize table cell
-        electrode_section_length.innerHTML = ElectrodeSectionLength;
         remove_button_cell.innerHTML = "<br><button type='button' onclick='removeRow(this)' >Remove </button><br>"; 
 
         // reset input field
-        var reset_inputs = ['ElectrodeSectionLength']
+        var reset_inputs = []
         for (let i = 0; i < reset_inputs.length; i++){
           var temp = reset_inputs[i];
           document.getElementById(temp).value = null;
         }
 
-        // After starting the slitting process, go to the Variables tab
-        if (SlittingSequence == 0){
+        // After starting the vacuum drying process, go to the Variables tab
+        if (VacuumDryingSequence == 0){
           document.getElementById('tab_Variables').click();
         }
 
-        // After adding the variables, go to the Slitting Sequence table tab
+        // After adding the variables, go to the Vacuum Drying Sequence table tab
         else{
-          alert("Slitting step added");
-          document.getElementById('tab_SlittingSequence').click();
+          alert("Vacuum Drying step added");
+          document.getElementById('tab_SequenceTable').click();
         }
       }
       
@@ -100,42 +87,42 @@
       /*                                                           INITIALIZE PAGE CONTROLS                                                                         */
       /*------------------------------------------------------------------------------------------------------------------------------------------------------------*/
       
-      // Button to start the calendering process
-      const button_StartSlittingProcess = document.getElementById('button_StartSlittingProcess')
-      button_StartSlittingProcess.addEventListener('click', () => {
-        log('\n**SLITTING STARTED**')
-        writeInflux('MT_140_slitting_sequence',SlittingSequence); // Update the Slitting Sequence to 0 to indicate the starting of the slitting process
-        writeSlittingSequence("-", "-", "-", "-","-" ) // Update the Slitting Sequence tab to indictae the starting of the slitting process
-        document.getElementById("button_StartSlittingProcess").disabled = true; // Disable the button so the user cannot start the process twice unless the process has ended
-        document.getElementById("button_StartSlittingProcess").innerHTML="Slitting Started"; // Change button display text to indicate that the process has started
-        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+      // Button to start the vacuum drying process
+      const button_StartVacuumDryingProcess = document.getElementById('button_StartVacuumDryingProcess')
+      button_StartVacuumDryingProcess.addEventListener('click', () => {
+        log('\n**VACUUM DRYING STARTED**')
+        writeOPC('MT_150_vacuumdrying_sequence',VacuumDryingSequence); // Update the Vacuum Drying Sequence to 0 to indicate the starting of the  process
+        writeTable() // Update the Table tab to indicate the starting of the vacuum drying process
+        document.getElementById("button_StartVacuumDryingProcess").disabled = true; // Disable the button so the user cannot start the process twice unless the process has ended
+        document.getElementById("button_StartVacuumDryingProcess").innerHTML="Vacuum Drying Started"; // Change button display text to indicate that the process has started
+        document.getElementById("button_Write").disabled = false; // Enable the user to press the "Submit Data" button in the Variables tab
         document.getElementById("button_Write_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
       })
 
-      // Button to write the variables into InfluxDB
+      // Button to write the variables into OPC-UA
       const button_Write = document.getElementById('button_Write');
       button_Write.addEventListener('click', () => {
-        log('\n**NEW SLITTING STEP ADDED**')
+        log('\n**NEW VACUUM DRYING STEP ADDED**')
 
-        // Update the SlittingSequence and write it into InfluxDB
-        SlittingSequence = SlittingSequence + 1; 
-        writeInflux('MT_140_slitting_sequence',SlittingSequence);
+        // Update the VacuumDryingSequence and write it into OPC-UA
+        VacuumDryingSequence = VacuumDryingSequence + 1; 
+        writeOPC('MT_150_vacuumdrying_sequence',VacuumDryingSequence);
 
         // Define variables 
-        var variable_input_id = ['ElectrodeSectionLength'] // html id of the variables
-        var variable_input_influx_id = ['CM_210_ridge_height-mmElec'] // Influx id of the variables
+        var variable_input_id = [] // html id of the variables
+        var variable_input_opcua_id = [] // OPC-UA id of the variables
         var Variable_values = [] // Empty matrix to store the variable values
 
-        // write the values of the variables into InfluxDB
+        // write the values of the variables into OPC-UA
         for (let i=0; i < variable_input_id.length; i++){
           const temp = document.getElementById(variable_input_id[i]);
           const variable_input_value = Number(temp.value);
-          writeInflux(variable_input_influx_id[i],variable_input_value);
+          writeOPC(variable_input_opcua_id[i],variable_input_value);
           Variable_values[i] = variable_input_value;
         }
         
-        writeSlittingSequence(Variable_values[0],Variable_values[1]); // update the Slitting Sequence tab
-        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Write to InfluxDB" button in the Variables tab
+        writeTable(Variable_values[0],Variable_values[1]); // update the Vacuum Drying Sequence tab
+        document.getElementById("button_Done").disabled = false; // Enable the user to press the "Submit Data" button in the Variables tab
         document.getElementById("button_Done_hint").hidden = true; // Hide the hint (tells the user to start the process before adding variables) in the variable tab
       })
     </script>
@@ -158,7 +145,7 @@
     <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
     <!--                                                                   TITLE, MAIN CONTAINER                                                              -->
     <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
-    <h1 class="Page_Title">Slitting</h1>          
+    <h1 class="Page_Title">Vacuum Drying</h1>          
 
     <div class="div_MainContainer">
         
@@ -174,9 +161,9 @@
             <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
             <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\5_E_Calendaring.png" alt="Calendaring logo">                      
             <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-            <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
+            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\6_E_Slitting.png" alt="Slitting logo">                         
             <img class="img_ProcessArrow" src="Images\DataAccess\Arrow.png" alt="Arrow">
-            <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
+            <img class="img_ProcessLogoChosen" src="Images\DataAccess\1_Electrode_Manufacturing\7_E_VacuumDrying.png" alt="Vacuum drying logo">                    
             <img class="img_ProcessArrow" src="Images\DataAccess\Input_Arrow.png" alt="Arrow">
             <img class="img_ProcessLogo" src="Images\DataAccess\1_Electrode_Manufacturing\8_E_ElectrodeFoil.png" alt="Electrode foil logo">                    
         </div>
@@ -197,7 +184,7 @@
         <div class="div_Tab">
           <button class="button_TabLinks" onclick="openTab(event, 'Manual')" id="defaultOpen">Manual</button>    <!--This tab is opened when the page loads-->
           <button class="button_TabLinks" onclick="openTab(event, 'Variables')" id = tab_Variables>Variables</button>
-          <button class="button_TabLinks" onclick="openTab(event, 'SlittingSequence')" id = "tab_SlittingSequence">Slitting Sequence</button> 
+          <button class="button_TabLinks" onclick="openTab(event, 'SequenceTable')" id = "tab_SequenceTable">Table</button> 
           <button class="button_TabLinks" onclick="openTab(event, 'Log')" id = "tab_Log">Log</button>                
         </div>
 
@@ -207,15 +194,13 @@
 
         <div id="Manual" class="div_TabContent" style="font-size: 16px; font-weight: 600;">
           <br>
-          After calendaring, or sometimes before, electrodes are slit and dried before they are transferred into the dry room. <br><br>
+          After slitting, the coated rolls are pushed onto a special goods carrier and stored in a vacuum oven. <br><br>
           
-          Slitting is separation process in which a wide electrode coil is divided into several smaller electrode coils. <br><br>
+          Vacuum drying is a process to remove the residual moisture and solvents from the coil by evaporation at low temperatures (60°C to 150°C)
+          
+          and low total pressure (0.07m bar to 1000m bar). <br><br>
 
-          &bull; The button "CELLFAB OneNote" directs you to the OneNote Notebook of the process for more information. <br><br>
-
-          &bull; Start the slitting process by pressing the "Start Slitting" button at bottom left.  <br><br>
-        
-          <button class="button_2" id="button_StartSlittingProcess">Start Slitting Process</button>
+          <button class="button_2" id="button_StartVacuumDryingProcess">Start Vacuum Drying Process</button>
         </div>
 
         <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->
@@ -223,24 +208,13 @@
         <!-------------------------------------------------------------------------------------------------------------------------------------------------------------->  
 
         <div id="Variables" class="div_TabContent">
-          <h3>Please enter the value for each variables of the slitting process. Then, press 'Write to InfluxDB' button</h3> 
+          <h3>Please enter the value for each variables of the vacuum drying process. Then, press 'Submit Data' button</h3> 
 
           <div class="div_AddVariable">
               <div class="div_AddVariableLeft"> 
 
-                <!----------------------------------------->
-                <!-- VARIABLE : ELECTRODE SECTION LENGTH -->
-                <!----------------------------------------->
-                <img class="img_VariableIcon" src="Images\Slitting\electrode_section_length_icon.png" alt="Electrode Section Length icon">
-                <label class="ProcessVariables">&emsp;Electrode Section Length</label>
-                <a href="https://www.google.com">  <!--TODO : Change to OneNote link-->
-                    <img class="img_InfoIcon" src="Images\Mixing\info_icon.png" alt="Info icon">
-                </a> 
-                <input class ="ProcessInput"type="number" id="ElectrodeSectionLength">
-                <label class="ProcessInputUnit">mm</label><br><br><br>
-
-                <button class="button_2" id="button_Write" disabled >Write to InfluxDB</button>
-                <label id="button_Write_hint">&emsp;Please start the slitting process before you add the variables</label>
+                <button class="button_2" id="button_Write" disabled >Submit Data</button>
+                <label id="button_Write_hint">&emsp;Please start the vacuum drying process before you add the variables</label>
               </div>
           </div>                    
         </div>
@@ -248,21 +222,20 @@
         <!------------------------------------------------------------------------------------------------------------------------------------------------------------------->
         <!--                                                             CALENDERING SEQUENCE TAB                                                                          -->
         <!------------------------------------------------------------------------------------------------------------------------------------------------------------------->                
-        <div id="SlittingSequence" class="div_TabContent">
+        <div id="SequenceTable" class="div_TabContent">
           <table id="Table"> 
               <tr> 
-                  <th>Slitting Sequence</th>
+                  <th>Vacuum Drying Sequence</th>
                   <th>Timestamp<br>[hh:mm:ss]</th>
-                  <th>Electrode Section Length<br>[mm]</th>
                   <th>&emsp;&emsp;&emsp;</th> 
               </tr>
           </table> <br>
           
-            <button class="button_1" onclick="downlaodCSV('Slitting')" id="button_csv" style="margin-left: 85%; ;">Download CSV</button>
+            <button class="button_1" onclick="downlaodCSV('VacuumDrying')" id="button_csv" style="margin-left: 85%; ;">Download CSV</button>
 
             <!-- Done button -->
-            <button class="button_2" onclick="doneProcess('Slitting')" id="button_Done" disabled>Slitting Done</button>
-            <label id="button_Done_hint">&emsp;Add at least one slitting sequence to end the slitting process</label>
+            <button class="button_2" onclick="doneProcess('VacuumDrying')" id="button_Done" disabled>Vacuum Drying Done</button>
+            <label id="button_Done_hint">&emsp;Add at least one vacuum drying sequence to end the vacuum drying process</label>
             <br><br>
             </div>
 
